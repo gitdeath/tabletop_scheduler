@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id          Int           @id @default(autoincrement())
+  slug        String        @unique
+  title       String
+  description String?
+  adminToken  String?       @default(uuid()) // For managing the event
+  telegramLink String?      // Invite link
+  telegramChatId String?    // Linked Chat ID for notifications
+  minPlayers  Int           @default(3)
+  maxPlayers  Int?
+  status      String        @default("DRAFT") // DRAFT, ACTIVE, FINALIZED
+  finalizedSlotId Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  timeSlots   TimeSlot[]
+  participants Participant[]
+}
+
+model TimeSlot {
+  id        Int       @id @default(autoincrement())
+  event     Event     @relation(fields: [eventId], references: [id])
+  eventId   Int
+  startTime DateTime
+  endTime   DateTime
+  votes     Vote[]
+}
+
+model Participant {
+  id         Int      @id @default(autoincrement())
+  event      Event    @relation(fields: [eventId], references: [id])
+  eventId    Int
+  name       String
+  telegramId String?
+  createdAt  DateTime @default(now())
+  votes      Vote[]
+}
+
+model Vote {
+  id            Int         @id @default(autoincrement())
+  participant   Participant @relation(fields: [participantId], references: [id])
+  participantId Int
+  timeSlot      TimeSlot    @relation(fields: [timeSlotId], references: [id])
+  timeSlotId    Int
+  preference    String      // YES, MAYBE, NO
+  canHost       Boolean     @default(false)
+}

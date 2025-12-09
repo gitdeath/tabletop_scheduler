@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export interface VisitedEvent {
     slug: string;
@@ -24,7 +24,7 @@ export function useEventHistory() {
         }
     }, []);
 
-    const addToHistory = (slug: string, title: string) => {
+    const addToHistory = useCallback((slug: string, title: string) => {
         try {
             const current = JSON.parse(localStorage.getItem('tabletop_history') || "[]");
             // Remove existing if present to bump to top
@@ -37,7 +37,7 @@ export function useEventHistory() {
         } catch (e) {
             console.error(e);
         }
-    };
+    }, []);
 
     return { history, addToHistory };
 }

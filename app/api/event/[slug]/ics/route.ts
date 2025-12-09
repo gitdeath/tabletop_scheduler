@@ -18,7 +18,7 @@ export async function GET(
             return newResponse("Event not finalized or not found", 404);
         }
 
-        const slot = event.timeSlots.find(s => s.id === event.finalizedSlotId);
+        const slot = event.timeSlots.find((s: any) => s.id === event.finalizedSlotId);
         if (!slot) return newResponse("Slot not found", 404);
 
         // Basic ICS format

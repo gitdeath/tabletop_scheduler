@@ -15,7 +15,11 @@ async function getEventWithVotes(slug: string) {
         include: {
             timeSlots: {
                 include: {
-                    votes: true
+                    votes: {
+                        include: {
+                            participant: true
+                        }
+                    }
                 },
                 orderBy: { startTime: 'asc' }
             },

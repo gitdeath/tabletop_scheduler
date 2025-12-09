@@ -8,7 +8,7 @@ export function HistoryTracker({ slug, title }: { slug: string, title: string })
 
     useEffect(() => {
         addToHistory(slug, title);
-    }, [slug, title]);
+    }, [slug, title, addToHistory]);
 
     return null;
 }

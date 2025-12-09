@@ -24,7 +24,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
     const [slots, setSlots] = useState(initialSlots);
     const [userName, setUserName] = useState("");
     const [userTelegram, setUserTelegram] = useState("");
-    const [votes, setVotes] = useState<Record<number, string>>({}); // slotId -> preference
+    const [votes, setVotes] = useState<Record<number, string | undefined>>({}); // slotId -> preference
     const [canHost, setCanHost] = useState<Record<number, boolean>>({}); // slotId -> canHost
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasVoted, setHasVoted] = useState(false);

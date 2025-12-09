@@ -45,7 +45,7 @@ async function poll(token: string) {
         const data = await res.json();
 
         if (data.ok && data.result.length > 0) {
-            for (const update of data.result) {
+            for (const update of (data.result as TelegramUpdate[])) {
                 lastUpdateId = Math.max(lastUpdateId, update.update_id);
                 await processUpdate(update, token);
             }
@@ -59,7 +59,18 @@ async function poll(token: string) {
     poll(token);
 }
 
-async function processUpdate(update: any, token: string) {
+// Basic types for Telegram Update
+interface TelegramUpdate {
+    update_id: number;
+    message?: {
+        text?: string;
+        chat: {
+            id: number;
+        };
+    };
+}
+
+async function processUpdate(update: TelegramUpdate, token: string) {
     if (!update.message || !update.message.text) return;
 
     const text = update.message.text as string;

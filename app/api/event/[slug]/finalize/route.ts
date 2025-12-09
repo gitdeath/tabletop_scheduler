@@ -19,6 +19,9 @@ export async function POST(
             data: {
                 status: "FINALIZED",
                 finalizedSlotId: parseInt(slotId.toString())
+            },
+            include: {
+                timeSlots: true
             }
         });
 

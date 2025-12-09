@@ -44,35 +44,34 @@ export default function ProfilePage() {
                     {history.length === 0 ? (
                         <div className="text-center py-12 text-slate-500 border border-dashed border-slate-800 rounded-lg">
                             <p>You haven&apos;t visited any events yet.</p>
+                            <Link href="/new" className="mt-4 inline-block px-4 py-2 bg-indigo-600 rounded-lg text-white text-sm font-medium hover:bg-indigo-500 transition-colors">
+                                Create an Event
+                            </Link>
                         </div>
                     ) : (
-                        Create an Event
-                </Link>
-            </div>
-            ) : (
-            <div className="grid gap-4">
-                {history.map(event => (
-                    <Link
-                        key={event.slug}
-                        href={`/e/${event.slug}`}
-                        className="group block p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-indigo-500/30 transition-all"
-                    >
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="font-semibold text-lg group-hover:text-indigo-300 transition-colors">
-                                    {event.title}
-                                </h3>
-                                <p className="text-xs text-slate-500 font-mono mt-1">
-                                    {format(new Date(event.lastVisited), "MMM d, yyyy")}
-                                </p>
-                            </div>
-                            <ArrowRightIcon className="w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                        <div className="grid gap-4">
+                            {history.map(event => (
+                                <Link
+                                    key={event.slug}
+                                    href={`/e/${event.slug}`}
+                                    className="group block p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-indigo-500/30 transition-all"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="font-semibold text-lg group-hover:text-indigo-300 transition-colors">
+                                                {event.title}
+                                            </h3>
+                                            <p className="text-xs text-slate-500 font-mono mt-1">
+                                                {format(new Date(event.lastVisited), "MMM d, yyyy")}
+                                            </p>
+                                        </div>
+                                        <ArrowRightIcon className="w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
-                    </Link>
-                ))}
-            </div>
                     )}
-        </div>
+                </div>
             </div >
         </div >
     )

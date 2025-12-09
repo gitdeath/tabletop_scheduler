@@ -15,7 +15,7 @@ export async function POST(
         }
 
         // Use a transaction to ensure participant exists and votes are recorded
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
             // 1. Create or find participant
             // Simple logic: we don't have auth, so we create a new participant every time? 
             // User Story says "No-Login". 

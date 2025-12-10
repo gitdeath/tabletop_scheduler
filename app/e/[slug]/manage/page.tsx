@@ -72,9 +72,9 @@ export default async function ManageEventPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12">
-            <div className="max-w-4xl mx-auto space-y-8">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-6">
-                    <div>
+            <div className="max-w-3xl mx-auto space-y-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 gap-4">
+                    <div className="flex-1 w-full md:w-auto">
                         <h1 className="text-3xl font-bold mb-2">Manage: {event.title}</h1>
                         <p className="text-slate-400">Pick the best time and notify your players.</p>
                         <div className="mt-4 flex items-center gap-4">
@@ -95,13 +95,14 @@ export default async function ManageEventPage({ params }: PageProps) {
                             hasManagerChatId={!!event.managerChatId}
                         />
                     </div>
+
+                    <Link
+                        href={`/e/${event.slug}`}
+                        className="shrink-0 px-4 py-2 rounded border border-slate-700 hover:bg-slate-900 transition-colors text-sm whitespace-nowrap"
+                    >
+                        View As Player
+                    </Link>
                 </div>
-                <Link
-                    href={`/e/${event.slug}`}
-                    className="px-4 py-2 rounded border border-slate-700 hover:bg-slate-900 transition-colors text-sm"
-                >
-                    View As Player
-                </Link>
             </div>
 
             {isFinalized && finalizedSlot ? (

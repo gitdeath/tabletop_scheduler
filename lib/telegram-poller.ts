@@ -116,4 +116,30 @@ async function connectEvent(slug: string, chatId: number, token: string) {
     });
 
     await sendTelegramMessage(chatId, `✅ <b>Connected!</b> I will notify this chat for: <b>${event.title}</b>`, token);
+
+    // --- PINNED DASHBOARD INITIALIZATION ---
+    try {
+        const fullEvent = await prisma.event.findUnique({
+            where: { id: event.id },
+            include: { timeSlots: { include: { votes: true } } }
+        });
+        const participants = await prisma.participant.count({ where: { eventId: event.id } });
+
+        const { generateStatusMessage } = await import("@/lib/status");
+        const { pinChatMessage } = await import("@/lib/telegram"); // Import pin function
+
+        if (fullEvent) {
+            const statusMsg = generateStatusMessage(fullEvent, participants);
+            const msgId = await sendTelegramMessage(chatId, statusMsg, token);
+            if (msgId) {
+                await pinChatMessage(chatId, msgId, token);
+                await prisma.event.update({
+                    where: { id: event.id },
+                    data: { pinnedMessageId: msgId }
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Failed to initialize dashboard pin", e);
+    }
 }

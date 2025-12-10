@@ -130,10 +130,22 @@ async function processUpdate(update: TelegramUpdate, token: string) {
         }
         // 2. Auto-Detect Link: https://.../e/[slug]
         else if (text.includes("/e/")) {
-            const match = text.match(/\/e\/([a-zA-Z0-9]+)/);
-            if (match && match[1]) {
-                const slug = match[1];
-                await connectEvent(slug, chatId, token);
+            // Updated regex to capture full URL if possible
+            // Matches: (http://...)/e/(slug)
+            const linkMatch = text.match(/(https?:\/\/[^\s]+)\/e\/([a-zA-Z0-9]+)/);
+
+            if (linkMatch && linkMatch[1] && linkMatch[2]) {
+                const origin = linkMatch[1]; // e.g. https://mytunnel.com
+                const slug = linkMatch[2];
+                console.log(`[Poller] Detected Event Link: ${origin} -> ${slug}`);
+                await connectEvent(slug, chatId, token, origin);
+            }
+            // Fallback for just partial text?
+            else {
+                const slugMatch = text.match(/\/e\/([a-zA-Z0-9]+)/);
+                if (slugMatch && slugMatch[1]) {
+                    await connectEvent(slugMatch[1], chatId, token);
+                }
             }
         }
         else if (text.startsWith("/start")) {
@@ -144,7 +156,10 @@ async function processUpdate(update: TelegramUpdate, token: string) {
     }
 }
 
-async function connectEvent(slug: string, chatId: number, token: string) {
+async function connectEvent(slug: string, chatId: number, token: string, detectedBaseUrl?: string) {
+    const prisma = (await import("@/lib/prisma")).default;
+    const { sendTelegramMessage } = await import("@/lib/telegram");
+
     const event = await prisma.event.findUnique({ where: { slug } });
 
     if (!event) return;
@@ -165,10 +180,15 @@ async function connectEvent(slug: string, chatId: number, token: string) {
         const participants = await prisma.participant.count({ where: { eventId: event.id } });
 
         const { generateStatusMessage } = await import("@/lib/status");
-        const { pinChatMessage } = await import("@/lib/telegram"); // Import pin function
+        const { pinChatMessage } = await import("@/lib/telegram");
+        const { getBaseUrl } = await import("@/lib/url");
 
         if (fullEvent) {
-            const statusMsg = generateStatusMessage(fullEvent, participants);
+            // Use detected URL, or fallback to Env/Localhost via getBaseUrl(null)
+            const baseUrl = detectedBaseUrl || getBaseUrl(null);
+            console.log(`[Poller] Initializing Pin with Base URL: ${baseUrl}`);
+
+            const statusMsg = generateStatusMessage(fullEvent, participants, baseUrl);
             const msgId = await sendTelegramMessage(chatId, statusMsg, token);
             if (msgId) {
                 await pinChatMessage(chatId, msgId, token);

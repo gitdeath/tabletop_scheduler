@@ -1,9 +1,17 @@
-export function getBaseUrl(headers: Headers) {
-    const host = headers.get("x-forwarded-host") || headers.get("host");
-    const protocol = headers.get("x-forwarded-proto") || "http";
+export function getBaseUrl(headers?: Headers | null) {
+    // 1. Try Headers (Dynamic)
+    if (headers) {
+        const host = headers.get("x-forwarded-host") || headers.get("host");
+        const protocol = headers.get("x-forwarded-proto") || "http";
+        // Handle comma-separated protocols
+        const proto = (typeof protocol === 'string' ? protocol.split(',')[0].trim() : "http");
+        if (host) return `${proto}://${host}`;
+    }
 
-    // Handle potential comma-separated protocols from multiple proxies
-    const proto = protocol.split(',')[0].trim();
+    // 2. Try Environment Variables (Static Fallback for Background Jobs)
+    const envUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    if (envUrl) return envUrl;
 
-    return host ? `${proto}://${host}` : "http://localhost:3000";
+    // 3. Fallback to Localhost
+    return "http://localhost:3000";
 }

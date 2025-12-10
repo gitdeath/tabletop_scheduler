@@ -64,6 +64,21 @@ export async function POST(
             return participant;
         });
 
+        // Fetch event to get telegramChatId and verify status
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            include: { timeSlots: { include: { votes: true } } }
+        });
+
+        if (event && event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
+            const { sendTelegramMessage } = await import("@/lib/telegram");
+            // Calculate status
+            const yesCount = event.timeSlots[0]?.votes.filter((v: any) => v.preference === 'YES').length || 0; // Rough check (first slot?)
+            // Actually, just announce the activity
+            const userDisplay = telegramId ? `@${telegramId.replace('@', '')}` : name;
+            await sendTelegramMessage(event.telegramChatId, `🚀 <b>${userDisplay}</b> just updated their availability for <b>${event.title}</b>!`, process.env.TELEGRAM_BOT_TOKEN);
+        }
+
         return NextResponse.json({ success: true, participantId: result.id });
     } catch (error) {
         console.error("Vote failed:", error);

@@ -18,6 +18,9 @@ By default, bots in group chats **cannot see messages** unless they start with `
 4. Select **Turn off**.
 5. You may need to remove and re-add the bot to your group for this to take effect.
 
+## 🚨 Important: Admin Permissions (Pinning)
+For the bot to **Pin Messages** (like the event status dashboard), it must be an **Administrator** in your group with the "Pin Messages" permission enabled. Make sure to promote it!
+
 ## 2. Configure Your Environment
 Add this token to your `docker-compose.yml` or `.env` file:
 ```env

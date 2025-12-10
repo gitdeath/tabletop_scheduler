@@ -48,6 +48,16 @@ export async function pinChatMessage(chatId: string | number, messageId: number,
         if (!res.ok) {
             const err = await res.text();
             console.error("[Telegram] API Error (pinChatMessage):", err);
+
+            // Handle "not enough rights" error specifically
+            try {
+                const jsonErr = JSON.parse(err);
+                if (jsonErr.error_code === 400 && jsonErr.description?.includes("not enough rights")) {
+                    await sendTelegramMessage(chatId, "⚠️ I tried to pin the message above, but I don't have permission. Please promote me to **Admin** with 'Pin Messages' rights!", token);
+                }
+            } catch (parseErr) {
+                // ignore parsing error
+            }
             return;
         }
 

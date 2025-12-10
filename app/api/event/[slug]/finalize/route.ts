@@ -29,7 +29,11 @@ export async function POST(
             const { sendTelegramMessage } = await import("@/lib/telegram");
             const slotTime = new Date(event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!.startTime);
 
-            const origin = new URL(req.url).origin;
+            // Determine origin: Env var > Header > Fallback
+            const host = req.headers.get("host") || "localhost:3000";
+            const protocol = host.includes("localhost") ? "http" : "https";
+            const origin = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+
             const icsLink = `${origin}/api/event/${event.slug}/ics`;
 
             const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;

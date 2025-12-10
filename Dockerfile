@@ -18,6 +18,7 @@ RUN \
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+RUN apk add --no-cache openssl libc6-compat
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate

@@ -79,3 +79,22 @@ export async function checkManagerStatus(slug: string) {
         hasManagerChatId: !!event?.managerChatId
     };
 }
+
+export async function updateManagerHandle(slug: string, handle: string) {
+    if (!handle || handle.trim().length < 2) {
+        return { error: "Handle must be at least 2 characters." };
+    }
+
+    // Ensure handle starts with @
+    const formattedHandle = handle.startsWith("@") ? handle : `@${handle}`;
+
+    try {
+        await prisma.event.update({
+            where: { slug },
+            data: { managerTelegram: formattedHandle }
+        });
+        return { success: true, handle: formattedHandle };
+    } catch (e) {
+        return { error: "Failed to update handle." };
+    }
+}

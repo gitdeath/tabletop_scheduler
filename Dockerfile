@@ -60,6 +60,23 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Install Prisma CLI for migrations in runner
+# We need this because 'prisma' is a dev dependency, effectively pruned in production image
+# But we need it for 'migrate deploy'
+COPY --from=deps /app/node_modules ./node_modules
+# Actually, copying all node_modules from deps (which includes dev deps) is huge. 
+# Better to just install prisma globally or locally in runner if needed, OR relies on the fact that if we copy from deps we get everything.
+# The 'builder' stage copies from 'deps', builds, and then 'runner' copies standalone.
+# Standalone does NOT include dev dependencies (like prisma CLI).
+
+# Let's install prisma specifically in runner or copy from deps if acceptable size.
+# A lighter way is to install just the CLI in runner.
+RUN npm install prisma --save-dev
+
+COPY prisma ./prisma
+COPY start.sh ./
+RUN chmod +x start.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -70,4 +87,4 @@ ENV HOSTNAME="0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD ["node", "server.js"]
+CMD ["./start.sh"]

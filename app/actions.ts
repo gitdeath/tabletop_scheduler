@@ -53,9 +53,29 @@ export async function dmManagerLink(slug: string) {
     }
 
     const { sendTelegramMessage } = await import("@/lib/telegram");
-    const link = `${process.env.NEXT_PUBLIC_BASE_URL}/e/${slug}/manage`;
+
+    // Attempt to dynamically detect the URL from the request headers
+    const { headers } = await import("next/headers");
+    const headerList = headers();
+    const host = headerList.get("host");
+    const protocol = headerList.get("x-forwarded-proto") || "http";
+
+    // Priority: Env Var -> Dynamic Header -> Localhost Fallback
+    const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : "http://localhost:3000");
+    const link = `${baseUrl}/e/${slug}/manage`;
 
     await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nHere is your link for <b>${event.title}</b>:\n${link}`, process.env.TELEGRAM_BOT_TOKEN!);
 
     return { success: true };
+}
+
+export async function checkManagerStatus(slug: string) {
+    const event = await prisma.event.findUnique({
+        where: { slug },
+        select: { managerChatId: true }
+    });
+
+    return {
+        hasManagerChatId: !!event?.managerChatId
+    };
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { dmManagerLink } from "@/app/actions";
+import { useState, useEffect } from "react";
+import { dmManagerLink, checkManagerStatus } from "@/app/actions";
 import { MessageCircle, Loader2, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -11,10 +11,31 @@ interface ManagerControlsProps {
     hasManagerChatId: boolean;
 }
 
-export function ManagerControls({ slug, initialHandle, hasManagerChatId }: ManagerControlsProps) {
+export function ManagerControls({ slug, initialHandle, hasManagerChatId: initialHasId }: ManagerControlsProps) {
+    const [hasManagerChatId, setHasManagerChatId] = useState(initialHasId);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const router = useRouter();
+
+    // Poll for status if we don't have the ID yet
+    useEffect(() => {
+        if (hasManagerChatId || !initialHandle) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const status = await checkManagerStatus(slug);
+                if (status.hasManagerChatId) {
+                    setHasManagerChatId(true);
+                    router.refresh();
+                }
+            } catch (e) {
+                // ignore errors
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [hasManagerChatId, initialHandle, slug, router]);
 
     const handleDM = async () => {
         if (!hasManagerChatId) return;
@@ -61,10 +82,18 @@ export function ManagerControls({ slug, initialHandle, hasManagerChatId }: Manag
                         : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
                         }`}
                 >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "DM Me Manager Link"}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                        (!initialHandle ? "Manager Handle Not Set" :
+                            (!hasManagerChatId ? <div className="flex items-center gap-2"><span>Waiting for Connection...</span><Loader2 className="w-3 h-3 animate-spin opacity-50" /></div> : "DM Me Manager Link"))}
                 </button>
 
-                {!hasManagerChatId && initialHandle && (
+                {!initialHandle && (
+                    <div className="p-3 bg-slate-800/50 border border-slate-800 rounded text-xs text-slate-400 text-center">
+                        Cannot send DM because no specific manager handle was set for this event.
+                    </div>
+                )}
+
+                {initialHandle && !hasManagerChatId && (
                     <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-200/80">
                         <p>
                             🤖 <strong>Bot doesn&apos;t know you yet!</strong> <br />

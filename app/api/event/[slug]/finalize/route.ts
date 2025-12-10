@@ -31,8 +31,8 @@ export async function POST(
 
             // Determine origin: Env var > Header > Fallback
             const host = req.headers.get("host") || "localhost:3000";
-            const protocol = host.includes("localhost") ? "http" : "https";
-            const origin = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+            const protocol = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+            const origin = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
 
             const icsLink = `${origin}/api/event/${event.slug}/ics`;
 

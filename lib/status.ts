@@ -1,5 +1,5 @@
 
-export function generateStatusMessage(event: any, participantCount: number) {
+export function generateStatusMessage(event: any, participantCount: number, baseUrl?: string) {
     let statusMsg = `📊 <b>${event.title}</b>\n\n`;
     statusMsg += `👥 <b>Participants:</b> ${participantCount}\n\n`;
     statusMsg += `<b>Current Votes:</b>\n`;
@@ -18,6 +18,8 @@ export function generateStatusMessage(event: any, participantCount: number) {
         statusMsg += `   ✅ ${yes}  ⚠️ ${maybe}\n`;
     });
 
-    statusMsg += `\n<a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://tabletop-scheduler.com'}/e/${event.slug}">🔗 Vote Here</a>`;
+    // Use provided key, or env vars, or default
+    const url = baseUrl || process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://tabletop-scheduler.com';
+    statusMsg += `\n<a href="${url}/e/${event.slug}">🔗 Vote Here</a>`;
     return statusMsg;
 }

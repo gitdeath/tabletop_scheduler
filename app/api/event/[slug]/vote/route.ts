@@ -83,7 +83,14 @@ export async function POST(
             const { generateStatusMessage } = await import("@/lib/status");
             const participants = await prisma.participant.count({ where: { eventId } });
 
-            const statusMsg = generateStatusMessage(event, participants);
+            // Detect URL dynamically
+            const { headers } = await import("next/headers");
+            const headerList = headers();
+            const host = headerList.get("host");
+            const protocol = headerList.get("x-forwarded-proto") || "http";
+            const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : "http://localhost:3000");
+
+            const statusMsg = generateStatusMessage(event, participants, baseUrl);
 
             if (event.pinnedMessageId) {
                 // Update existing pin

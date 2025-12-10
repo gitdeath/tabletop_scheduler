@@ -29,7 +29,10 @@ export async function POST(
             const { sendTelegramMessage } = await import("@/lib/telegram");
             const slotTime = new Date(event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!.startTime);
 
-            const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\nSee you there!`;
+            const origin = new URL(req.url).origin;
+            const icsLink = `${origin}/api/event/${event.slug}/ics`;
+
+            const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;
 
             await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
         }

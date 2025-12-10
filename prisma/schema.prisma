@@ -20,6 +20,7 @@ model Event {
   telegramLink String?      // Invite link
   telegramChatId String?    // Linked Chat ID for notifications
   managerTelegram String?   // Creator's handle for recovery
+  managerChatId   String?   // Creator's Chat ID for DMs
   pinnedMessageId Int?
   minPlayers  Int           @default(3)
   maxPlayers  Int?

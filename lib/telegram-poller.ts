@@ -67,6 +67,10 @@ interface TelegramUpdate {
         chat: {
             id: number;
         };
+        from?: {
+            id: number;
+            username?: string;
+        };
     };
 }
 
@@ -75,8 +79,40 @@ async function processUpdate(update: TelegramUpdate, token: string) {
 
     const text = update.message.text as string;
     const chatId = update.message.chat.id;
+    const userId = update.message.from?.id;
+    const username = update.message.from?.username;
 
-    console.log(`📩 Received Telegram message: "${text}" from ${chatId}`);
+    console.log(`📩 Received Telegram message: "${text}" from Chat: ${chatId}, User: ${userId} (@${username})`);
+
+    // --- OPPORTUNISTIC MANAGER DISCOVERY ---
+    // If we see a user whose handle matches a Manager, save their User ID (for DMs)
+    if (userId && username) {
+        const handle = "@" + username;
+        // Find events where this user is the manager but we don't have their DM ID yet
+        // OR just always update it to be safe (in case they changed ID/account?)
+        const events = await prisma.event.findMany({
+            where: {
+                managerTelegram: { equals: handle },
+            }
+        });
+
+        if (events.length > 0) {
+            for (const ev of events) {
+                if (ev.managerChatId !== userId.toString()) {
+                    await prisma.event.update({
+                        where: { id: ev.id },
+                        data: { managerChatId: userId.toString() }
+                    });
+                    console.log(`[Poller] Linked Manager ID ${userId} for event ${ev.slug}`);
+                }
+            }
+            // If this was a /start command, confirm to them
+            if (text.startsWith("/start")) {
+                await sendTelegramMessage(chatId, `👋 Hello @${username}! I've registered you as a manager. You can now use "DM me manager link" on the website.`, token);
+                return; // Stop processing /start
+            }
+        }
+    }
 
     try {
         // 1. Explicit Command: /connect [slug]
@@ -88,6 +124,9 @@ async function processUpdate(update: TelegramUpdate, token: string) {
             }
             const slug = parts[1].trim();
             await connectEvent(slug, chatId, token);
+        }
+        else if (text.startsWith("/start")) {
+            await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
         }
         // 2. Auto-Detect Link: https://.../e/[slug]
         else if (text.includes("/e/")) {

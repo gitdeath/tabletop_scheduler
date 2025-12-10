@@ -51,7 +51,7 @@ export default function NewEventPage() {
                 await setAdminCookie(data.slug, data.adminToken);
             }
 
-            router.push(`/e/${data.slug}`);
+            router.push(`/e/${data.slug}/manage`);
         } catch (error) {
             console.error("Submit Failed", error);
         } finally {

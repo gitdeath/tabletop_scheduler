@@ -7,6 +7,11 @@ A self-hosted, simplified scheduling tool for tabletop gamers. Ditch the group c
 ## Features
 - **Host**: Create events, propose multiple time slots, set quorum.
 - **Players**: No login required. Vote "Available", "If Needed", or "No".
+- **Telegram Integration**:
+  - Live status dashboard pinned in group chat.
+  - Updates in real-time as users vote.
+  - Manager recovery: DM the bot to regain access to your event.
+  - "Add to Calendar" ICS links for finalized events.
 - **Self-Hosted**: Dockerized, with local SQLite persistence.
 - **Infrastructure**: Optimized for home servers (NAS, Synology, Unraid).
 

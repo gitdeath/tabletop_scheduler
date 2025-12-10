@@ -40,3 +40,22 @@ export async function recoverManagerLink(slug: string, handle: string) {
 
     return { error: "Telegram handle does not match our records." };
 }
+
+export async function dmManagerLink(slug: string) {
+    const event = await prisma.event.findUnique({ where: { slug } });
+
+    if (!event || !event.managerTelegram) {
+        return { error: "No manager linked to this event." };
+    }
+
+    if (!event.managerChatId) {
+        return { error: `Bot doesn't know you yet. Please start the bot first!` };
+    }
+
+    const { sendTelegramMessage } = await import("@/lib/telegram");
+    const link = `${process.env.NEXT_PUBLIC_BASE_URL}/e/${slug}/manage`;
+
+    await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nHere is your link for <b>${event.title}</b>:\n${link}`, process.env.TELEGRAM_BOT_TOKEN!);
+
+    return { success: true };
+}

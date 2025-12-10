@@ -58,6 +58,20 @@ export function ManagerControls({ slug, initialHandle, hasManagerChatId: initial
         }
     };
 
+    if (!initialHandle) {
+        return (
+            <div className="mt-6 p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4 opacity-75">
+                <h3 className="font-semibold text-slate-200 flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-slate-500" />
+                    Manager Controls
+                </h3>
+                <div className="text-sm text-slate-500 px-2">
+                    Manager features (like recovering this page link via DM) are only available if you provide a Telegram handle when creating the event.
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="mt-6 p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
             <h3 className="font-semibold text-slate-200 flex items-center gap-2">
@@ -66,9 +80,9 @@ export function ManagerControls({ slug, initialHandle, hasManagerChatId: initial
             </h3>
 
             <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm text-slate-400">
-                    <span>Manager Handle:</span>
-                    <span className="font-mono text-slate-300">{initialHandle || "Not Set"}</span>
+                <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
+                    <span className="shrink-0">Manager Handle:</span>
+                    <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
                 </div>
 
                 {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
@@ -76,24 +90,17 @@ export function ManagerControls({ slug, initialHandle, hasManagerChatId: initial
 
                 <button
                     onClick={handleDM}
-                    disabled={loading || !initialHandle || !hasManagerChatId}
-                    className={`w-full py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 border ${loading || !initialHandle || !hasManagerChatId
+                    disabled={loading || !hasManagerChatId}
+                    className={`w-full py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 border ${loading || !hasManagerChatId
                         ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed"
                         : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
                         }`}
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                        (!initialHandle ? "Manager Handle Not Set" :
-                            (!hasManagerChatId ? <div className="flex items-center gap-2"><span>Waiting for Connection...</span><Loader2 className="w-3 h-3 animate-spin opacity-50" /></div> : "DM Me Manager Link"))}
+                        (!hasManagerChatId ? <span className="flex items-center gap-2">Waiting for Connection... <Loader2 className="w-3 h-3 animate-spin opacity-50" /></span> : "DM Me Manager Link")}
                 </button>
 
-                {!initialHandle && (
-                    <div className="p-3 bg-slate-800/50 border border-slate-800 rounded text-xs text-slate-400 text-center">
-                        Cannot send DM because no specific manager handle was set for this event.
-                    </div>
-                )}
-
-                {initialHandle && !hasManagerChatId && (
+                {!hasManagerChatId && (
                     <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-200/80">
                         <p>
                             🤖 <strong>Bot doesn&apos;t know you yet!</strong> <br />

@@ -73,6 +73,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # A lighter way is to install just the CLI in runner.
 RUN npm install prisma --save-dev
 
+# Fix permissions so nextjs user can run prisma (which might download engines or write logs)
+RUN chown -R nextjs:nodejs /app/node_modules
+
 COPY prisma ./prisma
 COPY start.sh ./
 RUN chmod +x start.sh

@@ -8,7 +8,7 @@ export async function POST(
     try {
         const eventId = parseInt(params.slug); // Since file is in /api/event/[slug]/vote, params.slug is the ID
         const body = await req.json();
-        const { name, telegramId, votes } = body;
+        const { name, telegramId, votes, participantId } = body;
 
         if (!name || !votes || !Array.isArray(votes)) {
             return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -16,22 +16,40 @@ export async function POST(
 
         // Use a transaction to ensure participant exists and votes are recorded
         const result = await prisma.$transaction(async (tx: any) => {
-            // 1. Create or find participant
-            // Simple logic: we don't have auth, so we create a new participant every time? 
-            // User Story says "No-Login". 
-            // To allow editing, we might need a cookie or something, but for MVP let's just create new.
-            // Wait, duplication is bad. Let's try to match by name+eventId for now (primitive)
-            // or just create new.
+            let participant;
 
-            const participant = await tx.participant.create({
-                data: {
-                    eventId,
-                    name,
-                    telegramId,
-                },
-            });
+            // 1. Check if updating existing participant
+            if (participantId) {
+                const existing = await tx.participant.findUnique({
+                    where: { id: participantId }
+                });
 
-            // 2. Create votes
+                // Security/Safety check: ensure participant belongs to this event
+                if (existing && existing.eventId === eventId) {
+                    participant = await tx.participant.update({
+                        where: { id: participantId },
+                        data: { name, telegramId }
+                    });
+
+                    // Clear old votes to replace with new ones
+                    await tx.vote.deleteMany({
+                        where: { participantId }
+                    });
+                }
+            }
+
+            // 2. If no valid existing participant found, create new
+            if (!participant) {
+                participant = await tx.participant.create({
+                    data: {
+                        eventId,
+                        name,
+                        telegramId,
+                    },
+                });
+            }
+
+            // 3. Create votes
             const voteData = votes.map((v: any) => ({
                 participantId: participant.id,
                 timeSlotId: v.slotId,

@@ -28,12 +28,42 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
     const [canHost, setCanHost] = useState<Record<number, boolean>>({}); // slotId -> canHost
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasVoted, setHasVoted] = useState(false);
+    const [participantId, setParticipantId] = useState<number | null>(null);
 
-    // Simple "Remember Me"
+    // Load "Remember Me" and previous state
     useState(() => {
         if (typeof window !== 'undefined') {
-            setUserName(localStorage.getItem('tabletop_username') || "");
-            setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
+            const savedParticipantId = localStorage.getItem(`tabletop_participant_${eventId}`);
+            if (savedParticipantId) {
+                const pid = parseInt(savedParticipantId);
+                setParticipantId(pid);
+
+                // Find this participant in the list to pre-fill info
+                const existing = participants.find(p => p.id === pid);
+                if (existing) {
+                    setUserName(existing.name);
+                    setUserTelegram(existing.telegramId || "");
+
+                    // Pre-fill votes based on existing data
+                    // We need to look at initialSlots to see what they voted
+                    const myVotes: Record<number, string> = {};
+                    const myHosting: Record<number, boolean> = {};
+
+                    initialSlots.forEach(slot => {
+                        const userVote = slot.votes.find((v: any) => v.participantId === pid);
+                        if (userVote) {
+                            myVotes[slot.id] = userVote.preference;
+                            if (userVote.canHost) myHosting[slot.id] = true;
+                        }
+                    });
+
+                    setVotes(myVotes);
+                    setCanHost(myHosting);
+                }
+            } else {
+                setUserName(localStorage.getItem('tabletop_username') || "");
+                setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
+            }
         }
     });
 
@@ -64,6 +94,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
             const payload = {
                 name: userName,
                 telegramId: userTelegram,
+                participantId, // Send if we have it
                 votes: Object.entries(votes).map(([slotId, preference]) => ({
                     slotId: parseInt(slotId),
                     preference,
@@ -78,6 +109,11 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
             });
 
             if (res.ok) {
+                const data = await res.json();
+                if (data.participantId) {
+                    localStorage.setItem(`tabletop_participant_${eventId}`, data.participantId.toString());
+                }
+
                 setHasVoted(true);
                 // In a real app we would revalidate data here
                 window.location.reload();

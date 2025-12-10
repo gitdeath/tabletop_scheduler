@@ -79,6 +79,15 @@ export default async function ManageEventPage({ params }: PageProps) {
                         <div className="mt-4 flex items-center gap-4">
                             <CopyLinkButton url={`/e/${event.slug}`} />
                         </div>
+                        {!event.telegramChatId && (
+                            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-800 rounded-lg text-sm text-blue-300 flex items-start gap-2 max-w-xl">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-bold">Connect Telegram Notifications</p>
+                                    <p>Bot not connected yet? Copy the event link above and <b>post it in your Telegram group</b>. The bot (if present) will see it and link the chat!</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <Link
                         href={`/e/${event.slug}`}

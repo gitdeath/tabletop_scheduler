@@ -100,7 +100,7 @@ export default function NewEventPage() {
                                 onChange={(e) => setTelegramLink(e.target.value)}
                             />
                             <p className="text-xs text-indigo-300">
-                                💡 Don&apos;t forget to invite your bot to the group so it can send notifications!
+                                💡 1. Add bot to group. 2. Paste invite link here. 3. <b>Post the event link in the group</b> so the bot can connect!
                             </p>
                         </div>
 

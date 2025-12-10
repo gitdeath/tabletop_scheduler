@@ -56,3 +56,29 @@ export async function pinChatMessage(chatId: string | number, messageId: number,
         console.error("[Telegram] Failed to pin message", e);
     }
 }
+
+export async function editMessageText(chatId: string | number, messageId: number, text: string, token: string) {
+    console.log(`[Telegram] Editing message ${messageId} in chat ${chatId}`);
+    const url = `https://api.telegram.org/bot${token}/editMessageText`;
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                message_id: messageId,
+                text: text,
+                parse_mode: 'HTML'
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            console.error("[Telegram] API Error (editMessageText):", err);
+        } else {
+            console.log(`[Telegram] Message ${messageId} edited successfully.`);
+        }
+    } catch (e) {
+        console.error("[Telegram] Failed to edit message", e);
+    }
+}

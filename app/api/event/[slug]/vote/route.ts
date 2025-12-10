@@ -77,6 +77,47 @@ export async function POST(
             // Actually, just announce the activity
             const userDisplay = telegramId ? `@${telegramId.replace('@', '')}` : name;
             await sendTelegramMessage(event.telegramChatId, `🚀 <b>${userDisplay}</b> just updated their availability for <b>${event.title}</b>!`, process.env.TELEGRAM_BOT_TOKEN);
+
+            // --- PINNED MESSAGE DASHBOARD LOGIC ---
+            const { editMessageText, pinChatMessage } = await import("@/lib/telegram");
+            const participants = await prisma.participant.count({ where: { eventId } });
+
+            // Build status text
+            let statusMsg = `📊 <b>${event.title}</b>\n\n`;
+            statusMsg += `👥 <b>Participants:</b> ${participants}\n\n`;
+            statusMsg += `<b>Current Votes:</b>\n`;
+
+            event.timeSlots.forEach((slot: any) => {
+                const yes = slot.votes.filter((v: any) => v.preference === 'YES').length;
+                const maybe = slot.votes.filter((v: any) => v.preference === 'MAYBE').length;
+                const dateStr = new Date(slot.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = new Date(slot.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+                // Highlight perfect slots
+                const isPerfect = yes >= event.minPlayers && yes === participants && participants > 0;
+                const prefix = isPerfect ? "🌟 " : "▫️ ";
+
+                statusMsg += `${prefix}<b>${dateStr} @ ${timeStr}</b>\n`;
+                statusMsg += `   ✅ ${yes}  ⚠️ ${maybe}\n`;
+            });
+
+            statusMsg += `\n<a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://tabletop-scheduler.com'}/e/${event.slug}">🔗 Vote Here</a>`;
+
+            if (event.pinnedMessageId) {
+                // Update existing pin
+                await editMessageText(event.telegramChatId, event.pinnedMessageId, statusMsg, process.env.TELEGRAM_BOT_TOKEN);
+            } else {
+                // Create new pin
+                const newMsgId = await sendTelegramMessage(event.telegramChatId, statusMsg, process.env.TELEGRAM_BOT_TOKEN);
+                if (newMsgId) {
+                    await pinChatMessage(event.telegramChatId, newMsgId, process.env.TELEGRAM_BOT_TOKEN);
+                    // Save the pinned ID
+                    await prisma.event.update({
+                        where: { id: eventId },
+                        data: { pinnedMessageId: newMsgId }
+                    });
+                }
+            }
         }
 
         return NextResponse.json({ success: true, participantId: result.id });

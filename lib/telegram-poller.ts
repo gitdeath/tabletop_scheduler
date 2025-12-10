@@ -76,6 +76,8 @@ async function processUpdate(update: TelegramUpdate, token: string) {
     const text = update.message.text as string;
     const chatId = update.message.chat.id;
 
+    console.log(`📩 Received Telegram message: "${text}" from ${chatId}`);
+
     try {
         // 1. Explicit Command: /connect [slug]
         if (text.startsWith("/connect")) {

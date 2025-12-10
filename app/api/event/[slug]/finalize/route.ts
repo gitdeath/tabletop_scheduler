@@ -34,7 +34,11 @@ export async function POST(
 
             const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;
 
-            await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
+            const msgId = await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
+            if (msgId) {
+                const { pinChatMessage } = await import("@/lib/telegram");
+                await pinChatMessage(event.telegramChatId, msgId, process.env.TELEGRAM_BOT_TOKEN);
+            }
         }
 
     } catch (error) {

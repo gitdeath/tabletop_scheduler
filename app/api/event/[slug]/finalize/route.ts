@@ -26,13 +26,18 @@ export async function POST(
         });
 
         if (event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
-            const { sendTelegramMessage } = await import("@/lib/telegram");
+            const { sendTelegramMessage, unpinChatMessage, pinChatMessage } = await import("@/lib/telegram");
             const slotTime = new Date(event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!.startTime);
 
-            // Determine origin: Env var > Header > Fallback
+            // Unpin the previous voting message if it exists
+            if (event.pinnedMessageId) {
+                await unpinChatMessage(event.telegramChatId, event.pinnedMessageId, process.env.TELEGRAM_BOT_TOKEN);
+            }
+
+            // Determine origin: Headers only (Dynamic)
             const host = req.headers.get("host") || "localhost:3000";
             const protocol = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-            const origin = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+            const origin = `${protocol}://${host}`;
 
             const icsLink = `${origin}/api/event/${event.slug}/ics`;
 
@@ -40,7 +45,6 @@ export async function POST(
 
             const msgId = await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
             if (msgId) {
-                const { pinChatMessage } = await import("@/lib/telegram");
                 await pinChatMessage(event.telegramChatId, msgId, process.env.TELEGRAM_BOT_TOKEN);
             }
         }

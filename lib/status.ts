@@ -18,8 +18,8 @@ export function generateStatusMessage(event: any, participantCount: number, base
         statusMsg += `   ✅ ${yes}  ⚠️ ${maybe}\n`;
     });
 
-    // Use provided key, or env vars, or default
-    const url = baseUrl || process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://tabletop-scheduler.com';
+    // Use provided key or default to localhost if missing (though caller should provide it)
+    const url = baseUrl || 'http://localhost:3000';
     statusMsg += `\n<a href="${url}/e/${event.slug}">🔗 Vote Here</a>`;
     return statusMsg;
 }

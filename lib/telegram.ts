@@ -31,6 +31,35 @@ export async function sendTelegramMessage(chatId: string | number, text: string,
     }
 }
 
+export async function unpinChatMessage(chatId: string | number, messageId: number, token: string) {
+    console.log(`[Telegram] Attempting to UNPIN message ${messageId} in chat ${chatId}`);
+    const url = `https://api.telegram.org/bot${token}/unpinChatMessage`;
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                message_id: messageId
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            console.error("[Telegram] API Error (unpinChatMessage):", err);
+            // We usually ignore errors here (e.g. message already unpinned, or bot kicked)
+            // But good to log them.
+            return false;
+        }
+
+        console.log(`[Telegram] Message ${messageId} unpinned successfully.`);
+        return true;
+    } catch (e) {
+        console.error("[Telegram] Failed to unpin message", e);
+        return false;
+    }
+}
+
 export async function pinChatMessage(chatId: string | number, messageId: number, token: string) {
     console.log(`[Telegram] Attempting to pin message ${messageId} in chat ${chatId}`);
     const url = `https://api.telegram.org/bot${token}/pinChatMessage`;

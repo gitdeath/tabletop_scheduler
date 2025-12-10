@@ -88,9 +88,11 @@ export async function POST(
             const headerList = headers();
             const host = headerList.get("host");
             const protocol = headerList.get("x-forwarded-proto") || "http";
-            const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : "http://localhost:3000");
+            const baseUrl = (host ? `${protocol}://${host}` : "http://localhost:3000");
 
+            console.log(`[Vote] Generated Base URL: ${baseUrl}`);
             const statusMsg = generateStatusMessage(event, participants, baseUrl);
+            console.log(`[Vote] Generated Status Msg: ${statusMsg}`);
 
             if (event.pinnedMessageId) {
                 // Update existing pin

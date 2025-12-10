@@ -47,11 +47,11 @@ ENV NODE_ENV=production
 RUN apk add --no-cache openssl libc6-compat
 
 # Create data directory and set permissions (ensure it exists for volume mount points)
+# Create data directory and set permissions (ensure it exists for volume mount points)
 RUN mkdir -p /app/data && chown -R node:node /app/data
 
-# Use existing 'node' user (UID 1000) to align with standard host users (like 'pi')
-# This prevents permission issues with bind mounts
-USER node
+# Stay as root for setup commands to avoid permission issues during build
+# USER node (will switch at the very end)
 
 COPY --from=builder /app/public ./public
 
@@ -67,14 +67,9 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 # Install Prisma CLI for migrations in runner
 # We need this because 'prisma' is a dev dependency, effectively pruned in production image
 # But we need it for 'migrate deploy'
-COPY --from=deps /app/node_modules ./node_modules
-# Actually, copying all node_modules from deps (which includes dev deps) is huge. 
-# Better to just install prisma globally or locally in runner if needed, OR relies on the fact that if we copy from deps we get everything.
-# The 'builder' stage copies from 'deps', builds, and then 'runner' copies standalone.
-# Standalone does NOT include dev dependencies (like prisma CLI).
+# COPY --from=deps /app/node_modules ./node_modules (Commented out legacy)
 
-# Let's install prisma specifically in runner or copy from deps if acceptable size.
-# A lighter way is to install just the CLI in runner.
+# Let's install prisma specifically in runner
 RUN npm install prisma --save-dev
 
 # Fix permissions so node user can run prisma (which might download engines or write logs)
@@ -82,8 +77,9 @@ RUN chown -R node:node /app/node_modules
 
 COPY prisma ./prisma
 COPY start.sh ./
-USER root
 RUN chmod +x start.sh && chown node:node start.sh
+
+# Switch to node user (UID 1000) for runtime
 USER node
 
 EXPOSE 3000

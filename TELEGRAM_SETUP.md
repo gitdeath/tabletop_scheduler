@@ -8,6 +8,16 @@ Since TabletopTime is self-hosted, you need to provide your own Telegram Bot for
 3. Follow the prompts to name your bot (e.g., `MyGamingGroupSchedulerBot`).
 4. **Copy the API Token** provided (it looks like `123456789:ABCdefGhI...`).
 
+## 🚨 Important: Group Privacy Settings
+By default, bots in group chats **cannot see messages** unless they start with `/` (commands) or mention the bot `@MyBot`. This means pasting a link won't work out of the box.
+
+**To fix this:**
+1. Go to **@BotFather** on Telegram.
+2. Send command `/mybots` -> Select your bot.
+3. Go to **Bot Settings** -> **Group Privacy**.
+4. Select **Turn off**.
+5. You may need to remove and re-add the bot to your group for this to take effect.
+
 ## 2. Configure Your Environment
 Add this token to your `docker-compose.yml` or `.env` file:
 ```env

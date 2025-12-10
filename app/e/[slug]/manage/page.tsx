@@ -46,7 +46,7 @@ export default async function ManageEventPage({ params }: PageProps) {
         // Simple score: YES = 1, MAYBE = 0.5 (for sorting)
         // But for Quorum, usually we count Yes+Maybe >= MinPlayers
         const viable = (yesCount + maybeCount) >= event.minPlayers;
-        const perfect = yesCount === totalParticipants && totalParticipants > 0;
+        const perfect = yesCount === totalParticipants && totalParticipants > 0 && yesCount >= event.minPlayers;
 
         return {
             ...slot,

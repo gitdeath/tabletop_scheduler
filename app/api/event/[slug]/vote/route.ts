@@ -120,6 +120,7 @@ export async function POST(
             }
         }
 
+        console.log(`[Vote] Vote processed successfully for participant ${result.id} in event ${eventId}`);
         return NextResponse.json({ success: true, participantId: result.id });
     } catch (error) {
         console.error("Vote failed:", error);

@@ -46,19 +46,23 @@ ENV NODE_ENV=production
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl libc6-compat
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create data directory and set permissions (ensure it exists for volume mount points)
+RUN mkdir -p /app/data && chown -R node:node /app/data
+
+# Use existing 'node' user (UID 1000) to align with standard host users (like 'pi')
+# This prevents permission issues with bind mounts
+USER node
 
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN chown node:node .next
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
 # Install Prisma CLI for migrations in runner
 # We need this because 'prisma' is a dev dependency, effectively pruned in production image
@@ -73,14 +77,14 @@ COPY --from=deps /app/node_modules ./node_modules
 # A lighter way is to install just the CLI in runner.
 RUN npm install prisma --save-dev
 
-# Fix permissions so nextjs user can run prisma (which might download engines or write logs)
-RUN chown -R nextjs:nodejs /app/node_modules
+# Fix permissions so node user can run prisma (which might download engines or write logs)
+RUN chown -R node:node /app/node_modules
 
 COPY prisma ./prisma
 COPY start.sh ./
-RUN chmod +x start.sh
-
-USER nextjs
+USER root
+RUN chmod +x start.sh && chown node:node start.sh
+USER node
 
 EXPOSE 3000
 

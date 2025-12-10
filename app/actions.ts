@@ -54,14 +54,12 @@ export async function dmManagerLink(slug: string) {
 
     const { sendTelegramMessage } = await import("@/lib/telegram");
 
-    // Attempt to dynamically detect the URL from the request headers
+    const { getBaseUrl } = await import("@/lib/url");
     const { headers } = await import("next/headers");
     const headerList = headers();
-    const host = headerList.get("host");
-    const protocol = headerList.get("x-forwarded-proto") || "http";
 
     // Priority: Dynamic Header -> Localhost Fallback
-    const baseUrl = (host ? `${protocol}://${host}` : "http://localhost:3000");
+    const baseUrl = getBaseUrl(headerList);
     const link = `${baseUrl}/e/${slug}/manage`;
 
     await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nHere is your link for <b>${event.title}</b>:\n${link}`, process.env.TELEGRAM_BOT_TOKEN!);

@@ -35,9 +35,8 @@ export async function POST(
             }
 
             // Determine origin: Headers only (Dynamic)
-            const host = req.headers.get("host") || "localhost:3000";
-            const protocol = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-            const origin = `${protocol}://${host}`;
+            const { getBaseUrl } = await import("@/lib/url");
+            const origin = getBaseUrl(req.headers);
 
             const icsLink = `${origin}/api/event/${event.slug}/ics`;
 

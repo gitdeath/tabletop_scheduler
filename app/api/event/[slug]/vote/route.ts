@@ -84,11 +84,13 @@ export async function POST(
             const participants = await prisma.participant.count({ where: { eventId } });
 
             // Detect URL dynamically
+            const { getBaseUrl } = await import("@/lib/url");
             const { headers } = await import("next/headers");
             const headerList = headers();
-            const host = headerList.get("host");
-            const protocol = headerList.get("x-forwarded-proto") || "http";
-            const baseUrl = (host ? `${protocol}://${host}` : "http://localhost:3000");
+
+            console.log(`[Vote] Headers - Host: ${headerList.get('host')}, X-Forwarded-Host: ${headerList.get('x-forwarded-host')}, Proto: ${headerList.get('x-forwarded-proto')}`);
+
+            const baseUrl = getBaseUrl(headerList);
 
             console.log(`[Vote] Generated Base URL: ${baseUrl}`);
             const statusMsg = generateStatusMessage(event, participants, baseUrl);

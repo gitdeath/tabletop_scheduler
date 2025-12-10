@@ -4,6 +4,7 @@ import { VotingInterface } from "@/components/VotingInterface";
 import { HistoryTracker } from "@/components/HistoryTracker";
 import { format } from "date-fns";
 import { Calendar, Users } from "lucide-react";
+import { ManagerRecovery } from "@/components/ManagerRecovery";
 
 interface PageProps {
     params: { slug: string };
@@ -104,6 +105,8 @@ export default async function EventPage({ params }: PageProps) {
                         Manage Event & Finalize Time
                     </a>
                 </div>
+
+                <ManagerRecovery slug={event.slug} />
 
             </div>
         </main>

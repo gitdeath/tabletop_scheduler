@@ -19,6 +19,7 @@ model Event {
   adminToken  String?       @default(uuid()) // For managing the event
   telegramLink String?      // Invite link
   telegramChatId String?    // Linked Chat ID for notifications
+  managerTelegram String?   // Creator's handle for recovery
   minPlayers  Int           @default(3)
   maxPlayers  Int?
   status      String        @default("DRAFT") // DRAFT, ACTIVE, FINALIZED

@@ -10,7 +10,7 @@ function generateSlug() {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title, description, minPlayers, slots, telegramLink } = body;
+        const { title, description, minPlayers, slots, telegramLink, managerTelegram } = body;
 
         if (!title || !slots || !Array.isArray(slots) || slots.length === 0) {
             return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
                 title,
                 description,
                 telegramLink,
+                managerTelegram,
                 minPlayers: minPlayers || 3,
                 status: "DRAFT",
                 timeSlots: {

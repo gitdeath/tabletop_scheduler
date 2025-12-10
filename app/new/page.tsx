@@ -11,6 +11,7 @@ export default function NewEventPage() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [telegramLink, setTelegramLink] = useState("");
+    const [managerTelegram, setManagerTelegram] = useState("");
     const [minPlayers, setMinPlayers] = useState(3);
     const [slots, setSlots] = useState<TimeSlot[]>([]);
 
@@ -32,6 +33,7 @@ export default function NewEventPage() {
                     title,
                     description,
                     telegramLink,
+                    managerTelegram,
                     minPlayers,
                     slots
                 }),
@@ -99,6 +101,20 @@ export default function NewEventPage() {
                             />
                             <p className="text-xs text-indigo-300">
                                 💡 Don&apos;t forget to invite your bot to the group so it can send notifications!
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="font-semibold text-slate-200">Your Telegram Handle (For Recovery)</label>
+                            <input
+                                type="text"
+                                placeholder="@YourHandle"
+                                className="px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-600"
+                                value={managerTelegram}
+                                onChange={(e) => setManagerTelegram(e.target.value)}
+                            />
+                            <p className="text-xs text-slate-400">
+                                Needed if you lose the manager link.
                             </p>
                         </div>
 

@@ -7,14 +7,16 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
 export default function ProfilePage() {
-    const { history } = useEventHistory();
+    const { history, validateHistory } = useEventHistory();
     const [userName, setUserName] = useState("");
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setUserName(localStorage.getItem('tabletop_username') || "Guest");
+            // Validate history (remove deleted events)
+            validateHistory();
         }
-    }, []);
+    }, [validateHistory]);
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12">

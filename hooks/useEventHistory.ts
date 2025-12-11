@@ -44,5 +44,32 @@ export function useEventHistory() {
         }
     }, []);
 
-    return { history, addToHistory };
+    const validateHistory = useCallback(async () => {
+        try {
+            const current = JSON.parse(localStorage.getItem('tabletop_history') || "[]");
+            if (current.length === 0) return;
+
+            const slugs = current.map((e: VisitedEvent) => e.slug);
+            const res = await fetch('/api/events/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slugs })
+            });
+
+            if (res.ok) {
+                const { validSlugs } = await res.json();
+                const validHistory = current.filter((e: VisitedEvent) => validSlugs.includes(e.slug));
+
+                // Only update if changes were made
+                if (validHistory.length !== current.length) {
+                    localStorage.setItem('tabletop_history', JSON.stringify(validHistory));
+                    setHistory(validHistory);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to validate history", e);
+        }
+    }, []);
+
+    return { history, addToHistory, validateHistory };
 }

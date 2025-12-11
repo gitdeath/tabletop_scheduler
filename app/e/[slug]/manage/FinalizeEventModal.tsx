@@ -17,7 +17,10 @@ interface FinalizeEventModalProps {
 
 export function FinalizeEventModal({ slug, slotId, potentialHosts }: FinalizeEventModalProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedHostId, setSelectedHostId] = useState<string>('');
+    // Auto-select if there's only one potential host
+    const [selectedHostId, setSelectedHostId] = useState<string>(
+        potentialHosts.length === 1 ? potentialHosts[0].id.toString() : ''
+    );
     const [address, setAddress] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();

@@ -6,8 +6,6 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
-import { FinalizeEvent } from "@/components/FinalizeEvent";
-import { generateGoogleCalendarLink } from "@/lib/google-calendar";
 
 interface PageProps {
     params: { slug: string };
@@ -45,58 +43,39 @@ export default async function ManageEventPage({ params }: PageProps) {
         const yesCount = slot.votes.filter(v => v.preference === 'YES').length;
         const maybeCount = slot.votes.filter(v => v.preference === 'MAYBE').length;
         const noCount = slot.votes.filter(v => v.preference === 'NO').length;
-        // Check for at least one host
-
-        const hasHost = slot.votes.some((v: any) => v.canHost);
-
         const totalParticipants = event.participants.length;
 
-        // Viable: Met minimum player count (Yes + If Needed)
+        // Check if anyone can host in this slot
+        const hasHost = slot.votes.some(v => (v.preference === 'YES' || v.preference === 'MAYBE') && v.canHost);
+
+        // Simple score: YES = 1, MAYBE = 0.5 (for sorting)
+        // But for Quorum, usually we count Yes+Maybe >= MinPlayers
         const viable = (yesCount + maybeCount) >= event.minPlayers;
 
-        // Perfect: Everyone can make it (Yes or If Needed) AND we have a host AND min players met
-        // Note: Previously "Perfect" required ALL YES. New req: "If Needed" counts as Yes but is less preferred.
-        // Let's keep "Perfect" as "Everyone YES + Host".
-        // And "Great" as "Everyone YES/MAYBE + Host".
-        // But for sorting, let's stick to the issue req: "If items with no available house should be ranked lower".
-
-        const allCanAttend = (yesCount + maybeCount) === totalParticipants && totalParticipants > 0;
-        const perfect = allCanAttend && yesCount >= event.minPlayers && hasHost;
+        // Perfect now requires a host
+        const perfect = yesCount === totalParticipants && totalParticipants > 0 && yesCount >= event.minPlayers && hasHost;
 
         return {
             ...slot,
             yesCount,
             maybeCount,
             noCount,
-            hasHost,
             viable,
-            perfect
+            perfect,
+            hasHost
         };
     });
 
     // Sort: Perfect first, then most YES, then most Viable
-    slots.sort((a: any, b: any) => {
-        // 1. Perfect (All attendees, Min players, Host)
+    slots.sort((a, b) => {
         if (a.perfect && !b.perfect) return -1;
         if (!a.perfect && b.perfect) return 1;
-
-        // 2. Viable + Host (Prioritize slots with a host)
-        if (a.viable && a.hasHost && (!b.viable || !b.hasHost)) return -1;
-        if ((!a.viable || !a.hasHost) && b.viable && b.hasHost) return 1;
-
-        // 3. Most YES votes
         if (b.yesCount !== a.yesCount) return b.yesCount - a.yesCount;
-
-        // 4. Most Total votes (Yes + Maybe)
-        const aTotal = a.yesCount + a.maybeCount;
-        const bTotal = b.yesCount + b.maybeCount;
-        if (bTotal !== aTotal) return bTotal - aTotal;
-
         return 0;
     });
 
     const isFinalized = event.status === 'FINALIZED';
-    const finalizedSlot = isFinalized ? event.timeSlots.find((s: any) => s.id === event.finalizedSlotId) : null;
+    const finalizedSlot = isFinalized ? event.timeSlots.find(s => s.id === event.finalizedSlotId) : null;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12">
@@ -155,67 +134,19 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <h2 className="text-2xl font-bold text-green-400 mb-2">Event Finalized!</h2>
                                     <p className="text-slate-300 text-lg">
                                         Playing on <br />
-                                        <p className="text-slate-300 text-lg">
-                                            Playing on <br />
-                                            <ClientDate date={finalizedSlot.startTime} formatStr="EEEE, MMMM do" className="font-semibold text-white" />
-                                            <span className="text-slate-400"> at </span>
-                                            <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
-                                            {event.finalizedHouse ? (
-                                                <>
-                                                    <br />
-                                                    <span className="text-slate-400 text-base mt-2 block">
-                                                        📍 {event.finalizedHouse.name}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <br />
-                                                    <span className="text-slate-500 text-base mt-2 block italic">
-                                                        📍 Location TBD
-                                                    </span>
-                                                </>
-                                            )}
-                                        </p>
+                                        <ClientDate date={finalizedSlot.startTime} formatStr="EEEE, MMMM do" className="font-semibold text-white" />
+                                        <span className="text-slate-400"> at </span>
+                                        <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
+                                    </p>
                                 </div>
 
                                 <div className="flex justify-center">
-                                    <FinalizeEvent
-                                        slug={event.slug}
-                                        slotId={finalizedSlot.id}
-                                        potentialHosts={finalizedSlot.votes.filter((v: any) => v.canHost).map((v: any) => ({
-                                            participantId: v.participant.id,
-                                            name: v.participant.name
-                                        }))}
-                                        currentLocation={event.finalizedHouse ? {
-                                            name: event.finalizedHouse.name,
-                                            address: event.finalizedHouse.address
-                                        } : undefined}
-                                        isUpdateMode={true}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <a
-                                        href={finalizedSlot ? generateGoogleCalendarLink({
-                                            title: event.title,
-                                            description: event.description || "Game Night!",
-                                            startTime: finalizedSlot.startTime,
-                                            endTime: finalizedSlot.endTime,
-                                            location: event.finalizedHouse ? `${event.finalizedHouse.name}${event.finalizedHouse.address ? `, ${event.finalizedHouse.address}` : ""}` : undefined
-                                        }) : '#'}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-3 group"
-                                    >
-                                        <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
-                                        Google Calendar
-                                    </a>
                                     <a
                                         href={`/api/event/${event.slug}/ics`}
-                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center justify-center gap-3 group"
+                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center gap-3 group"
                                     >
-                                        <span className="text-xl group-hover:scale-110 transition-transform">⬇️</span>
-                                        Download .ics
+                                        <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
+                                        Add to Calendar
                                     </a>
                                 </div>
                             </div>
@@ -235,7 +166,8 @@ export default async function ManageEventPage({ params }: PageProps) {
                                             <div className="flex items-center gap-4 w-full sm:w-auto">
                                                 <div className="text-center min-w-[60px] shrink-0">
                                                     {slot.perfect && <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1 bg-green-900/20 px-1.5 py-0.5 rounded">Perfect</div>}
-                                                    {slot.viable && !slot.perfect && <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 bg-indigo-900/20 px-1.5 py-0.5 rounded">Viable</div>}
+                                                    {slot.viable && !slot.perfect && !slot.hasHost && <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 bg-orange-900/20 px-1.5 py-0.5 rounded">No Host</div>}
+                                                    {slot.viable && !slot.perfect && slot.hasHost && <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 bg-indigo-900/20 px-1.5 py-0.5 rounded">Viable</div>}
                                                     {!slot.viable && <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1 bg-slate-800/50 px-1.5 py-0.5 rounded">Low T/O</div>}
                                                 </div>
                                                 <div>
@@ -244,22 +176,21 @@ export default async function ManageEventPage({ params }: PageProps) {
                                                     </div>
                                                     <div className="text-sm text-slate-400 flex gap-3 mt-0.5">
                                                         <span className="text-green-400 font-medium">{slot.yesCount} Yes</span>
-                                                        <span className="text-yellow-500/80">{slot.maybeCount} Maybe</span>
+                                                        <span className="text-yellow-500/80">{slot.maybeCount} If Needed</span>
                                                         <span className="text-red-900/60">{slot.noCount} No</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="w-full sm:w-auto">
-                                                <FinalizeEvent
-                                                    slug={event.slug}
-                                                    slotId={slot.id}
-                                                    potentialHosts={slot.votes.filter(v => v.canHost).map(v => ({
-                                                        participantId: v.participant.id,
-                                                        name: v.participant.name
-                                                    }))}
-                                                />
-                                            </div>
+                                            <form action={`/api/event/${event.slug}/finalize`} method="POST" className="w-full sm:w-auto">
+                                                <input type="hidden" name="slotId" value={slot.id} />
+                                                <button
+                                                    type="submit"
+                                                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-indigo-500 font-medium text-sm transition-all"
+                                                >
+                                                    Finalize
+                                                </button>
+                                            </form>
                                         </div>
                                     ))}
                                 </div>

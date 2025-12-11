@@ -28,8 +28,6 @@ model Event {
   finalizedSlotId Int?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  finalizedHouseId Int?
-  finalizedHouse House?     @relation(fields: [finalizedHouseId], references: [id])
   timeSlots   TimeSlot[]
   participants Participant[]
 }
@@ -61,13 +59,4 @@ model Vote {
   timeSlotId    Int
   preference    String      // YES, MAYBE, NO
   canHost       Boolean     @default(false)
-}
-
-model House {
-  id        Int      @id @default(autoincrement())
-  name      String
-  address   String?
-  ownerId   Int? // Optional link to a Participant
-  events    Event[]
-  createdAt DateTime @default(now())
 }

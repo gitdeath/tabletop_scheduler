@@ -193,7 +193,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                                         </div>
                                         <div className="mt-2 flex gap-2 text-xs">
                                             <span className="text-green-400">{slot.counts.yes} Yes</span>
-                                            <span className="text-yellow-400">{slot.counts.maybe} Maybe</span>
+                                            <span className="text-yellow-400">{slot.counts.maybe} If Needed</span>
                                             <span className="text-red-400">{slot.counts.no} No</span>
                                         </div>
                                     </div>
@@ -205,6 +205,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                                             color="green"
                                             icon={<Check className="w-5 h-5" />}
                                             label="Available"
+                                            title="Yes, I can make it"
                                         />
                                         <VoteButton
                                             active={myVote === 'MAYBE'}
@@ -212,6 +213,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                                             color="yellow"
                                             icon={<HelpCircle className="w-5 h-5" />}
                                             label="If Needed"
+                                            title="Yes, but not preferred"
                                         />
                                         <VoteButton
                                             active={myVote === 'NO'}
@@ -274,7 +276,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
     );
 }
 
-function VoteButton({ active, onClick, color, icon, label }: any) {
+function VoteButton({ active, onClick, color, icon, label, title }: any) {
     const activeClasses: any = {
         green: "bg-green-600 text-white shadow-green-900/20",
         yellow: "bg-yellow-600 text-white shadow-yellow-900/20",
@@ -289,7 +291,7 @@ function VoteButton({ active, onClick, color, icon, label }: any) {
                 "p-3 rounded-md transition-all flex flex-col items-center gap-1 w-20",
                 active ? `${activeClasses[color]} shadow-lg` : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
             )}
-            title={label}
+            title={title || label}
         >
             {icon}
             <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>

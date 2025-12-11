@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
+import { ClientDate } from "@/components/ClientDate";
 
 interface PageProps {
     params: { slug: string };
@@ -127,9 +128,9 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <h2 className="text-2xl font-bold text-green-400 mb-2">Event Finalized!</h2>
                                     <p className="text-slate-300 text-lg">
                                         Playing on <br />
-                                        <span className="font-semibold text-white">{format(new Date(finalizedSlot.startTime), "EEEE, MMMM do")}</span>
+                                        <ClientDate date={finalizedSlot.startTime} formatStr="EEEE, MMMM do" className="font-semibold text-white" />
                                         <span className="text-slate-400"> at </span>
-                                        <span className="font-semibold text-white">{format(new Date(finalizedSlot.startTime), "h:mm a")}</span>
+                                        <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
                                     </p>
                                 </div>
 
@@ -164,7 +165,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                                                 </div>
                                                 <div>
                                                     <div className="font-semibold text-base text-slate-200">
-                                                        {format(new Date(slot.startTime), "EEE, MMM d @ h:mm a")}
+                                                        <ClientDate date={slot.startTime} formatStr="EEE, MMM d @ h:mm a" />
                                                     </div>
                                                     <div className="text-sm text-slate-400 flex gap-3 mt-0.5">
                                                         <span className="text-green-400 font-medium">{slot.yesCount} Yes</span>

@@ -32,22 +32,22 @@
 
 ## Epic 3: Event Finalization & Logistics
 **Underlying Issues:** #13, #14
-**Status:** In Progress
-- [ ] **Phase 1: Investigation**
-    - [ ] Analyze `app/api/event/[slug]/finalize/route.ts` to see current finalization logic.
-    - [ ] Identify Telegram bot integration points (is there a `sendMessage` function?).
-    - [ ] Determine where to add "Select House" UI (likely a modal or separate page before tagging finalized state).
-- [ ] **Phase 2: Planning**
-    - [ ] Design the flow: User clicks Finalize -> Modally selects/creates House -> API called with HouseID -> DB Updated -> Telegram Sent.
-    - [ ] Plan schema updates if needed (e.g. `finalizedHouseId` on Event?).
-- [ ] **Phase 3: Implementation**
-    - [ ] Update Schema (if needed).
-    - [ ] Create House Selection UI.
-    - [ ] Update Finalize API.
-    - [ ] Implement Telegram notification.
-- [ ] **Phase 4: Commit**
-    - [ ] Commit changes with message: "feat: Event Finalization & Logistics - fixes #13, #14"
-    - [ ] Mark Epic as Done.
+**Status:** Done
+- [x] **Phase 1: Investigation**
+    - [x] Analyze `app/api/event/[slug]/finalize/route.ts` to see current finalization logic.
+    - [x] Identify Telegram bot integration points (is there a `sendMessage` function?).
+    - [x] Determine where to add "Select House" UI (likely a modal or separate page before tagging finalized state).
+- [x] **Phase 2: Planning**
+    - [x] Design the flow: User clicks Finalize -> Modally selects/creates House -> API called with HouseID -> DB Updated -> Telegram Sent.
+    - [x] Plan schema updates if needed (e.g. `finalizedHouseId` on Event?).
+- [x] **Phase 3: Implementation**
+    - [x] Update Schema (if needed).
+    - [x] Create House Selection UI.
+    - [x] Update Finalize API.
+    - [x] Implement Telegram notification.
+- [x] **Phase 4: Commit**
+    - [x] Commit changes with message: "feat: Event Finalization & Logistics - fixes #13, #14"
+    - [x] Mark Epic as Done.
 
 ## Epic 4: Documentation & Hygiene
 **Underlying Issues:** #15

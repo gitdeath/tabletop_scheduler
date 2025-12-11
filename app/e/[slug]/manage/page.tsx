@@ -7,6 +7,7 @@ import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
 import { FinalizeEvent } from "@/components/FinalizeEvent";
+import { generateGoogleCalendarLink } from "@/lib/google-calendar";
 
 interface PageProps {
     params: { slug: string };
@@ -154,19 +155,67 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <h2 className="text-2xl font-bold text-green-400 mb-2">Event Finalized!</h2>
                                     <p className="text-slate-300 text-lg">
                                         Playing on <br />
-                                        <ClientDate date={finalizedSlot.startTime} formatStr="EEEE, MMMM do" className="font-semibold text-white" />
-                                        <span className="text-slate-400"> at </span>
-                                        <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
-                                    </p>
+                                        <p className="text-slate-300 text-lg">
+                                            Playing on <br />
+                                            <ClientDate date={finalizedSlot.startTime} formatStr="EEEE, MMMM do" className="font-semibold text-white" />
+                                            <span className="text-slate-400"> at </span>
+                                            <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
+                                            {event.finalizedHouse ? (
+                                                <>
+                                                    <br />
+                                                    <span className="text-slate-400 text-base mt-2 block">
+                                                        📍 {event.finalizedHouse.name}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <br />
+                                                    <span className="text-slate-500 text-base mt-2 block italic">
+                                                        📍 Location TBD
+                                                    </span>
+                                                </>
+                                            )}
+                                        </p>
                                 </div>
 
                                 <div className="flex justify-center">
+                                    <FinalizeEvent
+                                        slug={event.slug}
+                                        slotId={finalizedSlot.id}
+                                        potentialHosts={finalizedSlot.votes.filter((v: any) => v.canHost).map((v: any) => ({
+                                            participantId: v.participant.id,
+                                            name: v.participant.name
+                                        }))}
+                                        currentLocation={event.finalizedHouse ? {
+                                            name: event.finalizedHouse.name,
+                                            address: event.finalizedHouse.address
+                                        } : undefined}
+                                        isUpdateMode={true}
+                                    />
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                     <a
-                                        href={`/api/event/${event.slug}/ics`}
-                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center gap-3 group"
+                                        href={finalizedSlot ? generateGoogleCalendarLink({
+                                            title: event.title,
+                                            description: event.description || "Game Night!",
+                                            startTime: finalizedSlot.startTime,
+                                            endTime: finalizedSlot.endTime,
+                                            location: event.finalizedHouse ? `${event.finalizedHouse.name}${event.finalizedHouse.address ? `, ${event.finalizedHouse.address}` : ""}` : undefined
+                                        }) : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-3 group"
                                     >
                                         <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
-                                        Add to Calendar
+                                        Google Calendar
+                                    </a>
+                                    <a
+                                        href={`/api/event/${event.slug}/ics`}
+                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center justify-center gap-3 group"
+                                    >
+                                        <span className="text-xl group-hover:scale-110 transition-transform">⬇️</span>
+                                        Download .ics
                                     </a>
                                 </div>
                             </div>
@@ -201,15 +250,16 @@ export default async function ManageEventPage({ params }: PageProps) {
                                                 </div>
                                             </div>
 
-                                            <form action={`/api/event/${event.slug}/finalize`} method="POST" className="w-full sm:w-auto">
-                                                <input type="hidden" name="slotId" value={slot.id} />
-                                                <button
-                                                    type="submit"
-                                                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-indigo-500 font-medium text-sm transition-all"
-                                                >
-                                                    Finalize
-                                                </button>
-                                            </form>
+                                            <div className="w-full sm:w-auto">
+                                                <FinalizeEvent
+                                                    slug={event.slug}
+                                                    slotId={slot.id}
+                                                    potentialHosts={slot.votes.filter(v => v.canHost).map(v => ({
+                                                        participantId: v.participant.id,
+                                                        name: v.participant.name
+                                                    }))}
+                                                />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

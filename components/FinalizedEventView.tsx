@@ -139,6 +139,35 @@ export function FinalizedEventView({ event, finalizedSlot }: FinalizedEventViewP
                             </div>
                         </div>
                     </div>
+
+                    {/* Add to Calendar */}
+                    <div className="grid grid-cols-3 gap-3 border-t border-slate-700/50 pt-6">
+                        <a
+                            href={googleCalendarUrl(event, finalizedSlot)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
+                        >
+                            <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
+                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Google</span>
+                        </a>
+                        <a
+                            href={outlookCalendarUrl(event, finalizedSlot)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
+                        >
+                            <span className="text-xl group-hover:scale-110 transition-transform">📧</span>
+                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Outlook</span>
+                        </a>
+                        <a
+                            href={`/api/event/${event.slug}/ics`}
+                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
+                        >
+                            <span className="text-xl group-hover:scale-110 transition-transform">📎</span>
+                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Apple/ICS</span>
+                        </a>
+                    </div>
                 </div>
 
                 {/* Join Section */}
@@ -224,4 +253,24 @@ export function FinalizedEventView({ event, finalizedSlot }: FinalizedEventViewP
             </div>
         </div>
     );
+}
+
+function googleCalendarUrl(event: any, slot: any) {
+    const start = slot.startTime.replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const end = slot.endTime.replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const text = encodeURIComponent(event.title);
+    const details = encodeURIComponent(event.description || "");
+    const location = encodeURIComponent(event.location || "");
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}&location=${location}`;
+}
+
+function outlookCalendarUrl(event: any, slot: any) {
+    const start = slot.startTime; // Outlook handles ISO strings reasonably well or requires specific formatting
+    const end = slot.endTime;
+    const text = encodeURIComponent(event.title);
+    const details = encodeURIComponent(event.description || "");
+    const location = encodeURIComponent(event.location || "");
+
+    return `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&startdt=${start}&enddt=${end}&subject=${text}&body=${details}&location=${location}`;
 }

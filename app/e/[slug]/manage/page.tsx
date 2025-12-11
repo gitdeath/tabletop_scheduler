@@ -149,7 +149,7 @@ export default async function ManageEventPage({ params }: PageProps) {
 
                                 {botUsername && (
                                     <a
-                                        href={`https://t.me/${botUsername}?startgroup=true`}
+                                        href={`https://t.me/${botUsername}?startgroup=true&admin=pin_messages`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="w-full py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"

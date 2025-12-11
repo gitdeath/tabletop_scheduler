@@ -6,6 +6,7 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
+import { FinalizeEvent } from "@/components/FinalizeEvent";
 
 interface PageProps {
     params: { slug: string };
@@ -44,7 +45,8 @@ export default async function ManageEventPage({ params }: PageProps) {
         const maybeCount = slot.votes.filter(v => v.preference === 'MAYBE').length;
         const noCount = slot.votes.filter(v => v.preference === 'NO').length;
         // Check for at least one host
-        const hasHost = slot.votes.some(v => v.canHost);
+
+        const hasHost = slot.votes.some((v: any) => v.canHost);
 
         const totalParticipants = event.participants.length;
 
@@ -72,7 +74,7 @@ export default async function ManageEventPage({ params }: PageProps) {
     });
 
     // Sort: Perfect first, then most YES, then most Viable
-    slots.sort((a, b) => {
+    slots.sort((a: any, b: any) => {
         // 1. Perfect (All attendees, Min players, Host)
         if (a.perfect && !b.perfect) return -1;
         if (!a.perfect && b.perfect) return 1;
@@ -93,7 +95,7 @@ export default async function ManageEventPage({ params }: PageProps) {
     });
 
     const isFinalized = event.status === 'FINALIZED';
-    const finalizedSlot = isFinalized ? event.timeSlots.find(s => s.id === event.finalizedSlotId) : null;
+    const finalizedSlot = isFinalized ? event.timeSlots.find((s: any) => s.id === event.finalizedSlotId) : null;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12">

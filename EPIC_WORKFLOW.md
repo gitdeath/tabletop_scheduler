@@ -13,7 +13,7 @@
 
 ## Epic 2: Scheduler Algorithm Refinements
 **Underlying Issues:** #17, #18
-**Status:** In Progress
+**Status:** Done
 - [x] **Phase 1: Investigation**
     - [x] Analyze `lib/algorithm.ts` (or equivalent) to understand current "Perfect" vs "Valid" slot logic.
     - [x] Analyze `House` model in `prisma/schema.prisma`.
@@ -22,29 +22,29 @@
         - "If Needed" counts as Yes for minimums but lowers rank.
         - "No House Available" lowers rank/removes "Perfect" status.
     - [x] Identify potential breaking changes (Ranking algorithm changes affecting existing proposed slots).
-- [ ] **Phase 3: Implementation**
-    - [ ] Update voting logic components/tooltips (Issue #17).
-    - [ ] Update backend ranking algorithm (Issue #18).
-    - [ ] Verify fixes against issue requirements.
-- [ ] **Phase 4: Commit**
-    - [ ] Commit changes with message: "feat: Scheduler Algorithm Refinements - fixes #17, #18"
-    - [ ] Mark Epic as Done.
+- [x] **Phase 3: Implementation**
+    - [x] Update voting logic components/tooltips (Issue #17).
+    - [x] Update backend ranking algorithm (Issue #18).
+    - [x] Verify fixes against issue requirements.
+- [x] **Phase 4: Commit**
+    - [x] Commit changes with message: "feat: Scheduler Algorithm Refinements - fixes #17, #18"
+    - [x] Mark Epic as Done.
 
 ## Epic 3: Event Finalization & Logistics
 **Underlying Issues:** #13, #14
-**Status:** Pending
+**Status:** In Progress
 - [ ] **Phase 1: Investigation**
-    - [ ] Review `House` selection UI in Manager Finalization flow.
-    - [ ] Review Calendar link generation code (currently likely just `.ics`).
+    - [ ] Analyze `app/api/event/[slug]/finalize/route.ts` to see current finalization logic.
+    - [ ] Identify Telegram bot integration points (is there a `sendMessage` function?).
+    - [ ] Determine where to add "Select House" UI (likely a modal or separate page before tagging finalized state).
 - [ ] **Phase 2: Planning**
-    - [ ] Design UI for "Select House" and "Add Address" during finalization (Issue #14).
-    - [ ] Design "Google Calendar" link generation (Issue #13).
-    - [ ] Identify potential breaking changes.
+    - [ ] Design the flow: User clicks Finalize -> Modally selects/creates House -> API called with HouseID -> DB Updated -> Telegram Sent.
+    - [ ] Plan schema updates if needed (e.g. `finalizedHouseId` on Event?).
 - [ ] **Phase 3: Implementation**
-    - [ ] Update Manager Finalize form to include House/Address.
-    - [ ] Update Email/Telegram notifications with address.
-    - [ ] Implement Google Calendar URL generator.
-    - [ ] Verify fixes against issue requirements.
+    - [ ] Update Schema (if needed).
+    - [ ] Create House Selection UI.
+    - [ ] Update Finalize API.
+    - [ ] Implement Telegram notification.
 - [ ] **Phase 4: Commit**
     - [ ] Commit changes with message: "feat: Event Finalization & Logistics - fixes #13, #14"
     - [ ] Mark Epic as Done.

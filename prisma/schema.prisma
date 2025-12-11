@@ -28,6 +28,8 @@ model Event {
   finalizedSlotId Int?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  finalizedHouseId Int?
+  finalizedHouse House?     @relation(fields: [finalizedHouseId], references: [id])
   timeSlots   TimeSlot[]
   participants Participant[]
 }
@@ -66,5 +68,6 @@ model House {
   name      String
   address   String?
   ownerId   Int? // Optional link to a Participant
+  events    Event[]
   createdAt DateTime @default(now())
 }

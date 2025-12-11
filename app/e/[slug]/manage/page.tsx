@@ -1,3 +1,4 @@
+
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import { ClientDate } from "@/components/ClientDate";
 import { FinalizeEventModal } from "./FinalizeEventModal";
 import { EditLocationModal } from "./EditLocationModal";
 import { generateGoogleCalendarUrl } from "@/lib/googleCalendar";
+import { getBotUsername } from "@/lib/telegram";
 
 interface PageProps {
     params: { slug: string };
@@ -41,6 +43,8 @@ export default async function ManageEventPage({ params }: PageProps) {
     if (!event) {
         notFound();
     }
+
+    const botUsername = await getBotUsername(process.env.TELEGRAM_BOT_TOKEN || '');
 
     // Calculate scores
     const slots = event.timeSlots.map(slot => {
@@ -133,12 +137,33 @@ export default async function ManageEventPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        {!event.telegramChatId && (
-                            <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-xl text-sm text-blue-300 flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                <div className="space-y-1">
-                                    <p className="font-bold">Connect Telegram Notifications</p>
-                                    <p className="opacity-90">Bot not connected yet? Copy the event link above and <b>post it in your Telegram group</b>. The bot (if present) will see it and link the chat!</p>
+                        {!event.telegramChatId ? (
+                            <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-xl text-sm text-blue-300 flex flex-col gap-4">
+                                <div className="flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                    <div className="space-y-1">
+                                        <p className="font-bold">Connect Telegram Notifications</p>
+                                        <p className="opacity-90">Bot not connected yet? Add the bot to your group and it will automatically link to this event.</p>
+                                    </div>
+                                </div>
+
+                                {botUsername && (
+                                    <a
+                                        href={`https://t.me/${botUsername}?startgroup=true`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+                                    >
+                                        <span>🤖 Add {botUsername} to Group</span>
+                                    </a>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="p-4 bg-green-900/20 border border-green-800 rounded-xl text-sm text-green-300 flex items-center gap-3">
+                                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-bold">Telegram Connected</p>
+                                    <p className="opacity-80 text-xs">This event is linked to a Telegram group.</p>
                                 </div>
                             </div>
                         )}

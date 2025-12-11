@@ -144,3 +144,28 @@ export async function editMessageText(chatId: string | number, messageId: number
         log.error("Failed to edit message", e as Error);
     }
 }
+
+/**
+ * Fetches the bot's own details to retrieve the username.
+ * Cached to prevent excessive API calls.
+ */
+export async function getBotUsername(token: string): Promise<string | null> {
+    const url = `https://api.telegram.org/bot${token}/getMe`;
+    try {
+        const res = await fetch(url, {
+            method: 'GET',
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!res.ok) {
+            log.error("Failed to fetch bot info", { status: res.status });
+            return null;
+        }
+
+        const data = await res.json();
+        return data.result?.username || null;
+    } catch (e) {
+        log.error("Error fetching bot info", e as Error);
+        return null;
+    }
+}

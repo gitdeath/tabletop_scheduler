@@ -164,6 +164,8 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                     {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
                     {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
 
+
+
                     <button
                         onClick={handleDM}
                         disabled={loading || !hasManagerChatId}
@@ -240,3 +242,4 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         </div>
     );
 }
+

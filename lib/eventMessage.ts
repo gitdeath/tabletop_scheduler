@@ -1,4 +1,4 @@
-import { generateGoogleCalendarUrl } from "@/lib/googleCalendar";
+import { googleCalendarUrl, outlookCalendarUrl } from "@/lib/calendar";
 
 interface EventData {
     slug: string;
@@ -14,29 +14,25 @@ interface SlotData {
     endTime: Date;
 }
 
-/**
- * Constructs the formatted Telegram message for a finalized event.
- * Includes host details, location, and calendar links (Google + ICS).
- * 
- * @param event - The event data including slug, title, and host info.
- * @param slot - The selected time slot for the event.
- * @param origin - The base URL of the application (for generating links).
- */
 export function buildFinalizedMessage(
     event: EventData,
     slot: SlotData,
     origin: string
 ): string {
     const slotTime = new Date(slot.startTime);
+    const slotEndTime = new Date(slot.endTime);
 
     const icsLink = `${origin}/api/event/${event.slug}/ics`;
-    const googleLink = generateGoogleCalendarUrl({
+
+    const calendarEvent = {
         title: event.title,
         description: `${event.description ? event.description + '\n\n' : ''}Hosted by ${event.finalizedHost?.name || 'TBD'}.\nView Event: ${origin}/e/${event.slug}`,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        location: event.location
-    });
+        location: event.location,
+        slug: event.slug
+    };
+
+    const googleLink = googleCalendarUrl(calendarEvent, slotTime, slotEndTime);
+    const outlookLink = outlookCalendarUrl(calendarEvent, slotTime, slotEndTime);
 
     let locString = event.location ? `\n📍 ${event.location}` : "";
     let hostString = event.finalizedHost ? `\n🏠 Hosted by <b>${event.finalizedHost.name}</b>` : "";
@@ -57,5 +53,5 @@ export function buildFinalizedMessage(
 
     const eventUrl = `${origin}/e/${event.slug}`;
 
-    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${dateString}\n⏰ ${timeString}${hostString}${locString}\n\n<a href="${eventUrl}">🔗 View Event Details</a>\n<a href="${icsLink}">📅 Add to Calendar (.ics)</a>\n<a href="${googleLink}">🗓️ Google Calendar</a>\n\nSee you there!`;
+    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${dateString}\n⏰ ${timeString}${hostString}${locString}\n\n<a href="${eventUrl}">🔗 View Event Details</a>\n<a href="${googleLink}">📅 Google Calendar</a> | <a href="${outlookLink}">📧 Outlook</a> | <a href="${icsLink}">📎 ICS</a>\n\nSee you there!`;
 }

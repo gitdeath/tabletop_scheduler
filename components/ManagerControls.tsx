@@ -95,42 +95,6 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         }
     };
 
-    if (!initialHandle) {
-        return (
-            <div className="mt-6 p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
-                <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-slate-400" />
-                    Manager Controls
-                </h3>
-
-                <div className="space-y-3">
-                    <p className="text-sm text-slate-400">
-                        Set a Telegram handle to enable manager features (like link recovery).
-                    </p>
-
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="@username"
-                            value={newHandle}
-                            onChange={(e) => setNewHandle(e.target.value)}
-                            className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
-                        />
-                        <button
-                            onClick={handleSaveHandle}
-                            disabled={isSaving || !newHandle.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                        >
-                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            Save
-                        </button>
-                    </div>
-                    {error && <p className="text-red-400 text-xs">{error}</p>}
-                </div>
-            </div>
-        );
-    }
-
     const handleAction = async () => {
         setIsDeleting(true);
         try {
@@ -160,54 +124,82 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
 
     return (
         <div className="mt-6 space-y-4">
+            {/* Manager Connection / Setup Section */}
             <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
                 <h3 className="font-semibold text-slate-200 flex items-center gap-2">
                     <MessageCircle className="w-4 h-4 text-indigo-400" />
                     Manager Controls
                 </h3>
 
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
-                        <span className="shrink-0">Manager Handle:</span>
-                        <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
-                    </div>
+                {!initialHandle ? (
+                    // Setup Mode (No handle yet)
+                    <div className="space-y-3">
+                        <p className="text-sm text-slate-400">
+                            Set a Telegram handle to enable manager features (like link recovery).
+                        </p>
 
-                    {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
-                    {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
-
-
-
-                    <button
-                        onClick={handleDM}
-                        disabled={loading || !hasManagerChatId}
-                        className={`w-full py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 border ${loading || !hasManagerChatId
-                            ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed"
-                            : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
-                            }`}
-                    >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                            (!hasManagerChatId ? <span className="flex items-center gap-2">Waiting for Connection... <Loader2 className="w-3 h-3 animate-spin opacity-50" /></span> : "DM Me Manager Link")}
-                    </button>
-
-                    {!hasManagerChatId && (
-                        <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-200/80">
-                            <p>
-                                🤖 <strong>Bot doesn&apos;t know you yet!</strong> <br />
-                                To enable this button:
-                            </p>
-                            <ul className="list-disc pl-4 mt-1 space-y-1">
-                                <li>DM the bot <code>/start</code></li>
-                                <li>OR paste a link in a group with the bot</li>
-                            </ul>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="@username"
+                                value={newHandle}
+                                onChange={(e) => setNewHandle(e.target.value)}
+                                className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                            />
+                            <button
+                                onClick={handleSaveHandle}
+                                disabled={isSaving || !newHandle.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
+                            >
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Save
+                            </button>
                         </div>
-                    )}
-                    <p className="text-[10px] text-slate-500 text-center">
-                        (Requires you to have started the bot)
-                    </p>
-                </div>
+                        {error && <p className="text-red-400 text-xs">{error}</p>}
+                    </div>
+                ) : (
+                    // Connected Mode (Has handle)
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
+                            <span className="shrink-0">Manager Handle:</span>
+                            <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
+                        </div>
+
+                        {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
+                        {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
+
+                        <button
+                            onClick={handleDM}
+                            disabled={loading || !hasManagerChatId}
+                            className={`w-full py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 border ${loading || !hasManagerChatId
+                                ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed"
+                                : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
+                                }`}
+                        >
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                                (!hasManagerChatId ? <span className="flex items-center gap-2">Waiting for Connection... <Loader2 className="w-3 h-3 animate-spin opacity-50" /></span> : "DM Me Manager Link")}
+                        </button>
+
+                        {!hasManagerChatId && (
+                            <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-200/80">
+                                <p>
+                                    🤖 <strong>Bot doesn&apos;t know you yet!</strong> <br />
+                                    To enable this button:
+                                </p>
+                                <ul className="list-disc pl-4 mt-1 space-y-1">
+                                    <li>DM the bot <code>/start</code></li>
+                                    <li>OR paste a link in a group with the bot</li>
+                                </ul>
+                            </div>
+                        )}
+                        <p className="text-[10px] text-slate-500 text-center">
+                            (Requires you to have started the bot)
+                        </p>
+                    </div>
+                )}
             </div>
 
-            {/* Danger Zone */}
+            {/* Danger Zone - Always Visible */}
             <div className={`p-4 rounded-xl border ${isFinalized ? 'border-orange-900/30 bg-orange-950/10' : 'border-red-900/30 bg-red-950/10'} space-y-4`}>
                 <div className="flex items-center justify-between">
                     <h3 className={`text-sm font-semibold ${isFinalized ? 'text-orange-400' : 'text-red-400'} flex items-center gap-2`}>

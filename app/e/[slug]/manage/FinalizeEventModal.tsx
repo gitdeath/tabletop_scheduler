@@ -102,23 +102,25 @@ export function FinalizeEventModal({ slug, slotId, potentialHosts }: FinalizeEve
                                             <span className="font-medium">{host.name}</span>
                                         </label>
                                     ))}
-                                    <label
-                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedHostId === ''
-                                            ? 'bg-indigo-600/20 border-indigo-500 text-slate-100'
-                                            : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:border-slate-600'
-                                            }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="host"
-                                            value=""
-                                            checked={selectedHostId === ''}
-                                            onChange={(e) => setSelectedHostId('')}
-                                            className="hidden"
-                                        />
-                                        {selectedHostId === '' && <Check className="w-4 h-4 text-indigo-400" />}
-                                        <span className="font-medium">No one / TBD</span>
-                                    </label>
+                                    {potentialHosts.length === 0 && (
+                                        <label
+                                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedHostId === ''
+                                                ? 'bg-indigo-600/20 border-indigo-500 text-slate-100'
+                                                : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:border-slate-600'
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="host"
+                                                value=""
+                                                checked={selectedHostId === ''}
+                                                onChange={(e) => setSelectedHostId('')}
+                                                className="hidden"
+                                            />
+                                            {selectedHostId === '' && <Check className="w-4 h-4 text-indigo-400" />}
+                                            <span className="font-medium">No one / TBD</span>
+                                        </label>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded-lg text-yellow-500 text-sm">

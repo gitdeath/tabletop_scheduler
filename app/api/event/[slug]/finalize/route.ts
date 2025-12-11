@@ -37,7 +37,8 @@ export async function POST(
 
         if (event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
             const { sendTelegramMessage, unpinChatMessage, pinChatMessage } = await import("@/lib/telegram");
-            const slotTime = new Date(event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!.startTime);
+            const { buildFinalizedMessage } = await import("@/lib/eventMessage");
+            const slotTime = event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!;
 
             // Unpin the previous voting message if it exists
             if (event.pinnedMessageId) {
@@ -48,12 +49,7 @@ export async function POST(
             const { getBaseUrl } = await import("@/lib/url");
             const origin = getBaseUrl(req.headers);
 
-            const icsLink = `${origin}/api/event/${event.slug}/ics`;
-
-            let locString = event.location ? `\n📍 ${event.location}` : "";
-            let hostString = event.finalizedHost ? `\n🏠 Hosted by <b>${event.finalizedHost.name}</b>` : "";
-
-            const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${hostString}${locString}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;
+            const msg = buildFinalizedMessage(event, slotTime, origin);
 
             const msgId = await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
             if (msgId) {

@@ -7,6 +7,7 @@ import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
 import { FinalizeEventModal } from "./FinalizeEventModal";
+import { EditLocationModal } from "./EditLocationModal";
 import { generateGoogleCalendarUrl } from "@/lib/googleCalendar";
 
 interface PageProps {
@@ -174,9 +175,24 @@ export default async function ManageEventPage({ params }: PageProps) {
                                             {event.location && (
                                                 <div className="flex items-start gap-2 text-slate-300">
                                                     <span className="text-lg mt-0.5">📍</span>
-                                                    <div>
-                                                        <div className="font-medium text-slate-400 text-xs uppercase tracking-wide">Location</div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="font-medium text-slate-400 text-xs uppercase tracking-wide">Location</div>
+                                                            <EditLocationModal slug={event.slug} initialLocation={event.location} />
+                                                        </div>
                                                         <div className="text-white">{event.location}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {!event.location && (
+                                                <div className="flex items-start gap-2 text-slate-300">
+                                                    <span className="text-lg mt-0.5">📍</span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="font-medium text-slate-400 text-xs uppercase tracking-wide">Location</div>
+                                                            <EditLocationModal slug={event.slug} initialLocation={null} />
+                                                        </div>
+                                                        <div className="text-slate-500 italic">TBD</div>
                                                     </div>
                                                 </div>
                                             )}

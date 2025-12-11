@@ -80,7 +80,7 @@ async function connectEvent(slug: string, chatId: number, token: string) {
     });
 
     log.info("Connected chat to event", { chatId, slug });
-    await sendTelegramMessage(chatId, `✅ <b>Connected!</b> I will notify this chat for: <b>${event.title}</b>`, token);
+
 }
 
 

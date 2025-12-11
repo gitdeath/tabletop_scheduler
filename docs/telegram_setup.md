@@ -31,5 +31,5 @@ TabletopTime uses **Polling** to check for messages. This means:
 3. Click the **"Add Bot to Group"** button.
    - This will open Telegram and prompt you to add the bot as an Admin.
 4. Once added, the bot will automatically detect the event link if you pasted it, OR you can simply paste the link now.
-5. The bot should reply "Connected!".
+5. The bot will automatically post the event dashboard to the group.
 6. Now, when you **Finalize** the event, the bot will post the result to the group and pin it!

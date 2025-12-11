@@ -177,7 +177,7 @@ async function connectEvent(slug: string, chatId: number, token: string, detecte
         data: { telegramChatId: chatId.toString() }
     });
 
-    await sendTelegramMessage(chatId, `✅ <b>Connected!</b> I will notify this chat for: <b>${event.title}</b>`, token);
+
 
     // --- PINNED DASHBOARD INITIALIZATION ---
     try {

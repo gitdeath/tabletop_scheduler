@@ -225,7 +225,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                                             <div className="flex items-center gap-4 w-full sm:w-auto">
                                                 <div className="text-center min-w-[60px] shrink-0">
                                                     {slot.perfect && <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1 bg-green-900/20 px-1.5 py-0.5 rounded">Perfect</div>}
-                                                    {slot.viable && !slot.perfect && !slot.hasHost && <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 bg-orange-900/20 px-1.5 py-0.5 rounded">No Host</div>}
+                                                    {!slot.hasHost && <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 bg-orange-900/20 px-1.5 py-0.5 rounded">No Host</div>}
                                                     {slot.viable && !slot.perfect && slot.hasHost && <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 bg-indigo-900/20 px-1.5 py-0.5 rounded">Viable</div>}
                                                     {!slot.viable && <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1 bg-slate-800/50 px-1.5 py-0.5 rounded">Low T/O</div>}
                                                 </div>

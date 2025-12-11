@@ -55,5 +55,7 @@ export function buildFinalizedMessage(
         timeZone: event.timezone || 'UTC'
     });
 
-    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${dateString}\n⏰ ${timeString}${hostString}${locString}\n\n<a href="${icsLink}">📅 Add to Calendar (.ics)</a>\n<a href="${googleLink}">🗓️ Google Calendar</a>\n\nSee you there!`;
+    const eventUrl = `${origin}/e/${event.slug}`;
+
+    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${dateString}\n⏰ ${timeString}${hostString}${locString}\n\n<a href="${eventUrl}">🔗 View Event Details</a>\n<a href="${icsLink}">📅 Add to Calendar (.ics)</a>\n<a href="${googleLink}">🗓️ Google Calendar</a>\n\nSee you there!`;
 }

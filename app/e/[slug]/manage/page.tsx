@@ -43,18 +43,29 @@ export default async function ManageEventPage({ params }: PageProps) {
         const yesCount = slot.votes.filter(v => v.preference === 'YES').length;
         const maybeCount = slot.votes.filter(v => v.preference === 'MAYBE').length;
         const noCount = slot.votes.filter(v => v.preference === 'NO').length;
+        // Check for at least one host
+        const hasHost = slot.votes.some(v => v.canHost);
+
         const totalParticipants = event.participants.length;
 
-        // Simple score: YES = 1, MAYBE = 0.5 (for sorting)
-        // But for Quorum, usually we count Yes+Maybe >= MinPlayers
+        // Viable: Met minimum player count (Yes + If Needed)
         const viable = (yesCount + maybeCount) >= event.minPlayers;
-        const perfect = yesCount === totalParticipants && totalParticipants > 0 && yesCount >= event.minPlayers;
+
+        // Perfect: Everyone can make it (Yes or If Needed) AND we have a host AND min players met
+        // Note: Previously "Perfect" required ALL YES. New req: "If Needed" counts as Yes but is less preferred.
+        // Let's keep "Perfect" as "Everyone YES + Host".
+        // And "Great" as "Everyone YES/MAYBE + Host".
+        // But for sorting, let's stick to the issue req: "If items with no available house should be ranked lower".
+
+        const allCanAttend = (yesCount + maybeCount) === totalParticipants && totalParticipants > 0;
+        const perfect = allCanAttend && yesCount >= event.minPlayers && hasHost;
 
         return {
             ...slot,
             yesCount,
             maybeCount,
             noCount,
+            hasHost,
             viable,
             perfect
         };
@@ -62,9 +73,22 @@ export default async function ManageEventPage({ params }: PageProps) {
 
     // Sort: Perfect first, then most YES, then most Viable
     slots.sort((a, b) => {
+        // 1. Perfect (All attendees, Min players, Host)
         if (a.perfect && !b.perfect) return -1;
         if (!a.perfect && b.perfect) return 1;
+
+        // 2. Viable + Host (Prioritize slots with a host)
+        if (a.viable && a.hasHost && (!b.viable || !b.hasHost)) return -1;
+        if ((!a.viable || !a.hasHost) && b.viable && b.hasHost) return 1;
+
+        // 3. Most YES votes
         if (b.yesCount !== a.yesCount) return b.yesCount - a.yesCount;
+
+        // 4. Most Total votes (Yes + Maybe)
+        const aTotal = a.yesCount + a.maybeCount;
+        const bTotal = b.yesCount + b.maybeCount;
+        if (bTotal !== aTotal) return bTotal - aTotal;
+
         return 0;
     });
 

@@ -60,3 +60,11 @@ model Vote {
   preference    String      // YES, MAYBE, NO
   canHost       Boolean     @default(false)
 }
+
+model House {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  ownerId   Int? // Optional link to a Participant
+  createdAt DateTime @default(now())
+}

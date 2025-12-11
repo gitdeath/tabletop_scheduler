@@ -29,13 +29,10 @@ export async function GET(
         const start = formatDateICS(new Date(slot.startTime));
         const end = formatDateICS(new Date(slot.endTime));
 
-        // Determine Base URL (Need to construct it or assume logic - ideally passed via header but this is a GET route downloaded by user)
-        // Best effort: usage of getBaseUrl from lib/url if available, or just omit if tricky.
-        // Actually, let's keep it simple: Just user description + Host. Link might be separate.
-        // But headers might be available.
-        const origin = req.headers.get("host") || "tabletop.local";
-        const protocol = req.headers.get("x-forwarded-proto") || "http";
-        const url = `${protocol}://${origin}/e/${event.slug}`;
+        // Determine Base URL
+        const { getBaseUrl } = await import("@/lib/url");
+        const origin = getBaseUrl(req.headers);
+        const url = `${origin}/e/${event.slug}`;
 
         const descText = `${event.description ? event.description + '\\n\\n' : ''}Hosted by ${event.finalizedHost?.name || 'TBD'}.\\nView Event: ${url}`;
 

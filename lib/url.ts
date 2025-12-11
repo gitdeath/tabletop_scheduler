@@ -15,11 +15,6 @@ export function getBaseUrl(headers?: Headers | null) {
         if (host) return `${proto}://${host}`;
     }
 
-    // Priority 2: Static Environment Variable
-    // Useful for background jobs or cron tasks where no request context exists.
-    const envUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL;
-    if (envUrl) return envUrl;
-
-    // Priority 3: Localhost Fallback
+    // Priority 2: Localhost Fallback
     return "http://localhost:3000";
 }

@@ -1,5 +1,7 @@
 
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/url";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -236,7 +238,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <a
                                         href={generateGoogleCalendarUrl({
                                             title: event.title,
-                                            description: `Hosted by ${event.finalizedHost?.name || 'TBD'}. View Event: ${process.env.NEXT_PUBLIC_APP_URL || ''}/e/${event.slug}`,
+                                            description: `Hosted by ${event.finalizedHost?.name || 'TBD'}. View Event: ${getBaseUrl(headers())}/e/${event.slug}`,
                                             startTime: finalizedSlot.startTime,
                                             endTime: finalizedSlot.endTime,
                                             location: event.location

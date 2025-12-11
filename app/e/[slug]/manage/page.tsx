@@ -178,6 +178,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                             slug={event.slug}
                             initialHandle={event.managerTelegram}
                             hasManagerChatId={!!event.managerChatId}
+                            isFinalized={isFinalized}
                         />
                     </div>
 

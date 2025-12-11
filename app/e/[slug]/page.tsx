@@ -96,7 +96,27 @@ export default async function EventPage({ params }: PageProps) {
                 </div>
 
                 {/* Voting or Finalized View */}
-                {isFinalized && finalizedSlot ? (
+                {/* Status Views */}
+                {event.status === 'CANCELLED' ? (
+                    <div className="p-8 rounded-2xl bg-slate-900 border border-red-900/50 text-center space-y-6">
+                        <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="text-3xl">🚫</span>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-red-500 mb-2">Event Cancelled</h2>
+                            <p className="text-slate-400 text-lg max-w-lg mx-auto">
+                                The organizer has cancelled this event.
+                                <br />
+                                No further voting or actions are allowed.
+                            </p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-800/50">
+                            <Link href="/" className="text-slate-500 hover:text-slate-300 transition-colors text-sm underline">
+                                Return to Home
+                            </Link>
+                        </div>
+                    </div>
+                ) : isFinalized && finalizedSlot ? (
                     <FinalizedEventView
                         event={event}
                         finalizedSlot={finalizedSlot}

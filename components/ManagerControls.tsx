@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { dmManagerLink, checkManagerStatus, updateManagerHandle, deleteEvent } from "@/app/actions";
+import { dmManagerLink, checkManagerStatus, updateManagerHandle, deleteEvent, cancelEvent } from "@/app/actions";
 import { MessageCircle, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -9,13 +9,14 @@ interface ManagerControlsProps {
     slug: string;
     initialHandle: string | null;
     hasManagerChatId: boolean;
+    isFinalized: boolean;
 }
 
 /**
  * Control panel for the event creator.
- * Allows setting a manager handle, sending recovery links via DM, and deleting the event.
+ * Allows setting a manager handle, sending recovery links via DM, and deleting/canceling the event.
  */
-export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId }: ManagerControlsProps) {
+export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId, isFinalized }: ManagerControlsProps) {
     const [initialHandle, setInitialHandle] = useState(propsInitialHandle);
     const [hasManagerChatId, setHasManagerChatId] = useState(initialHasId);
 
@@ -130,19 +131,29 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         );
     }
 
-    const handleDelete = async () => {
+    const handleAction = async () => {
         setIsDeleting(true);
         try {
-            const res = await deleteEvent(slug);
+            // Choose action based on state
+            const actionPromise = isFinalized ? cancelEvent(slug) : deleteEvent(slug);
+            const res = await actionPromise;
+
             if ('error' in res) {
                 setError(res.error || "Unknown error");
                 setIsDeleting(false);
             } else {
-                // Redirect happened on server usually, but just in case
-                router.push("/");
+                if (isFinalized) {
+                    // Cancelled -> Refresh to show cancelled state
+                    router.refresh();
+                    setShowDeleteConfirm(false);
+                    setIsDeleting(false);
+                } else {
+                    // Deleted -> Redirect
+                    router.push("/");
+                }
             }
         } catch (e) {
-            setError("Failed to delete event.");
+            setError(`Failed to ${isFinalized ? 'cancel' : 'delete'} event.`);
             setIsDeleting(false);
         }
     };
@@ -197,28 +208,31 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
             </div>
 
             {/* Danger Zone */}
-            <div className="p-4 rounded-xl border border-red-900/30 bg-red-950/10 space-y-4">
+            <div className={`p-4 rounded-xl border ${isFinalized ? 'border-orange-900/30 bg-orange-950/10' : 'border-red-900/30 bg-red-950/10'} space-y-4`}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-red-400 flex items-center gap-2">
+                    <h3 className={`text-sm font-semibold ${isFinalized ? 'text-orange-400' : 'text-red-400'} flex items-center gap-2`}>
                         <Trash2 className="w-4 h-4" />
                         Danger Zone
                     </h3>
                     {!showDeleteConfirm && (
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="text-xs text-red-400 hover:text-red-300 underline"
+                            className={`text-xs ${isFinalized ? 'text-orange-400 hover:text-orange-300' : 'text-red-400 hover:text-red-300'} underline`}
                         >
-                            Delete Event...
+                            {isFinalized ? "Cancel Event..." : "Delete Event..."}
                         </button>
                     )}
                 </div>
 
                 {showDeleteConfirm && (
                     <div className="space-y-3 animation-in fade-in slide-in-from-top-2">
-                        <div className="p-3 bg-red-950/40 border border-red-900/50 rounded text-xs text-red-200 flex gap-2">
-                            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                        <div className={`p-3 ${isFinalized ? 'bg-orange-950/40 border border-orange-900/50 text-orange-200' : 'bg-red-950/40 border border-red-900/50 text-red-200'} rounded text-xs flex gap-2`}>
+                            <AlertTriangle className={`w-4 h-4 ${isFinalized ? 'text-orange-500' : 'text-red-500'} shrink-0`} />
                             <p>
-                                <b>Warning:</b> This action cannot be undone. All votes, participants, and data will be permanently erased.
+                                <b>Warning:</b> {isFinalized
+                                    ? "This will cancel the event and notify all participants. The event data will be permanently removed."
+                                    : "This action cannot be undone. All votes, participants, and data will be permanently erased."
+                                }
                             </p>
                         </div>
                         <div className="flex gap-2">
@@ -226,14 +240,14 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                                 onClick={() => setShowDeleteConfirm(false)}
                                 className="flex-1 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
                             >
-                                Cancel
+                                Back
                             </button>
                             <button
-                                onClick={handleDelete}
+                                onClick={handleAction}
                                 disabled={isDeleting}
-                                className="flex-1 py-2 rounded bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
+                                className={`flex-1 py-2 rounded ${isFinalized ? 'bg-orange-600 hover:bg-orange-500' : 'bg-red-600 hover:bg-red-500'} text-white text-xs font-bold shadow-lg ${isFinalized ? 'shadow-orange-900/20' : 'shadow-red-900/20'} flex items-center justify-center gap-2`}
                             >
-                                {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm Delete"}
+                                {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : (isFinalized ? "Confirm Cancel" : "Confirm Delete")}
                             </button>
                         </div>
                     </div>

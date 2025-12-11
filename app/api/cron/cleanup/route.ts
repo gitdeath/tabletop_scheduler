@@ -16,8 +16,12 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 7); // 7 days ago
+        const now = new Date();
+        const cutoff7Days = new Date(now);
+        cutoff7Days.setDate(now.getDate() - 7);
+
+        const cutoff1Day = new Date(now);
+        cutoff1Day.setDate(now.getDate() - 1);
 
         // Fetch candidate events that might be expired.
         // We filter in memory for complex logic (e.g. checking "latest slot end time" vs cutoff).
@@ -25,6 +29,7 @@ export async function GET(req: Request) {
             where: {
                 OR: [
                     { status: 'FINALIZED' },
+                    { status: 'CANCELLED' },
                     {
                         // Check non-finalized events with at least one slot
                         timeSlots: { some: {} }
@@ -37,22 +42,34 @@ export async function GET(req: Request) {
         });
 
         const eventsToDelete = candidateEvents.filter(event => {
-            if (event.status === 'FINALIZED') {
+            if (event.status === 'CANCELLED') {
+                // Cancelled events: Delete 1 day after the event date
+                if (event.finalizedSlotId) {
+                    const slot = event.timeSlots.find(s => s.id === event.finalizedSlotId);
+                    // If the slot time is before "yesterday" (now - 1 day), it's safe to delete
+                    if (slot && new Date(slot.startTime) < cutoff1Day) return true;
+                }
+                // Fallback for cancelled events with no slot (unlikely) or just old updates
+                return new Date(event.updatedAt) < cutoff7Days;
+            }
+            else if (event.status === 'FINALIZED') {
+                // Finalized events: Keep for 7 days
                 if (!event.finalizedSlotId) return false;
                 const slot = event.timeSlots.find(s => s.id === event.finalizedSlotId);
                 if (!slot) return false;
-                return new Date(slot.startTime) < cutoff;
-            } else {
-                // For draft events: Delete if the LAST possible slot was over 7 days ago.
+                return new Date(slot.startTime) < cutoff7Days;
+            }
+            else {
+                // Drafts: Delete if stale for 7 days
                 if (event.timeSlots.length === 0) {
-                    return new Date(event.createdAt) < cutoff; // Orphans
+                    return new Date(event.createdAt) < cutoff7Days; // Orphans
                 }
 
                 const lastEndTime = event.timeSlots.reduce((max, slot) => {
                     return slot.endTime > max ? slot.endTime : max;
                 }, new Date(0));
 
-                return lastEndTime < cutoff;
+                return lastEndTime < cutoff7Days;
             }
         });
 

@@ -162,3 +162,51 @@ export async function deleteEvent(slug: string) {
         return { error: "Failed to delete event" };
     }
 }
+
+export async function cancelEvent(slug: string) {
+    const event = await prisma.event.findUnique({
+        where: { slug }
+    });
+
+    if (!event) {
+        return { error: "Event not found" };
+    }
+
+    log.warn("Cancelling event", { slug, title: event.title });
+
+    try {
+        // Update status first
+        await prisma.event.update({
+            where: { id: event.id },
+            data: { status: 'CANCELLED' }
+        });
+
+        // Handle Telegram
+        if (event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
+            const { editMessageText, unpinChatMessage } = await import("@/lib/telegram");
+            const token = process.env.TELEGRAM_BOT_TOKEN;
+            const { getBaseUrl } = await import("@/lib/url");
+            const { headers } = await import("next/headers");
+            const baseUrl = getBaseUrl(headers());
+
+            if (event.pinnedMessageId) {
+                // Edit the pinned message to show cancellation
+                // We keep it pinned so everyone sees it
+                await editMessageText(
+                    event.telegramChatId,
+                    event.pinnedMessageId,
+                    `🚫 <b>Event Cancelled</b> (was: ${event.finalizedSlotId ? 'Finalized' : 'Planned'})\n\n` +
+                    `The event "<b>${event.title}</b>" has been cancelled by the host.\n\n` +
+                    `<a href="${baseUrl}/e/${slug}">View Event Details</a>`,
+                    token
+                );
+            }
+        }
+
+        log.info("Event cancelled successfully", { slug });
+        return { success: true };
+    } catch (e) {
+        log.error("Failed to cancel event", e as Error);
+        return { error: "Failed to cancel event" };
+    }
+}

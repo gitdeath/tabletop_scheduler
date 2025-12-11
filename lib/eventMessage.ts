@@ -32,7 +32,7 @@ export function buildFinalizedMessage(
     const icsLink = `${origin}/api/event/${event.slug}/ics`;
     const googleLink = generateGoogleCalendarUrl({
         title: event.title,
-        description: `Hosted by ${event.finalizedHost?.name || 'TBD'}. View Event: ${origin}/e/${event.slug}`,
+        description: `${event.description ? event.description + '\n\n' : ''}Hosted by ${event.finalizedHost?.name || 'TBD'}.\nView Event: ${origin}/e/${event.slug}`,
         startTime: slot.startTime,
         endTime: slot.endTime,
         location: event.location

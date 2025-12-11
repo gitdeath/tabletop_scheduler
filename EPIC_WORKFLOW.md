@@ -24,17 +24,34 @@
 
 ## Epic 2: Event Finalization Improvements
 **Underlying Issues:** #19 (Auto-select single option)
+**Status:** Done
+- [x] **Phase 1: Investigation**
+    - [x] Analyze codebase for relevant files (`app/e/[slug]/manage/FinalizeEventModal.tsx`).
+    - [x] Summarize findings on current selection logic.
+- [x] **Phase 2: Planning**
+    - [x] Write a pseudo-code implementation plan - explain how to detect if only one option exists and select it automatically (Issue #19: "On Finalize Event if only one option it should be selected").
+    - [x] Identify potential breaking changes.
+- [x] **Phase 3: Implementation**
+    - [x] Write the code to resolve issues.
+    - [x] Verify fixes against issue requirements.
+    - [x] Update documentation within the project that is impacted by the change.
+- [x] **Phase 4: Commit**
+    - [x] Commit changes with message: "feat: Event Finalization Improvements - fixes #19"
+    - [x] Mark Epic as Done.
+
+## Epic 3: Event Description in Calendar Invite
+**Underlying Issues:** #22 (Event description missing from calendar)
 **Status:** Pending
-- [ ] **Phase 1: Investigation**
-    - [ ] Analyze codebase for relevant files (`app/e/[slug]/manage/FinalizeEventModal.tsx`).
-    - [ ] Summarize findings on current selection logic.
+- [x] **Phase 1: Investigation**
+    - [x] Analyze `app/api/event/[slug]/ics/route.ts` (ICS generation).
+    - [x] Analyze `lib/eventMessage.ts` (Google Calendar link generation).
+    - [x] Determine if description is currently passed from the database to these generators.
+    - Result: `lib/eventMessage.ts` overwrites description. `ics/route.ts` uses raw description but misses host info.
 - [ ] **Phase 2: Planning**
-    - [ ] Write a pseudo-code implementation plan - explain how to detect if only one option exists and select it automatically (Issue #19: "On Finalize Event if only one option it should be selected").
-    - [ ] Identify potential breaking changes.
+    - [x] Plan code changes to ensure `event.description` is fetched and passed to calendar generators.
 - [ ] **Phase 3: Implementation**
-    - [ ] Write the code to resolve issues.
-    - [ ] Verify fixes against issue requirements.
-    - [ ] Update documentation within the project that is impacted by the change.
+    - [ ] Update ICS route to include Description + Host + Link.
+    - [ ] Update Google Calendar link builder to include Description + Host + Link.
+    - [ ] Verification.
 - [ ] **Phase 4: Commit**
-    - [ ] Commit changes with message: "feat: Event Finalization Improvements - fixes #19"
-    - [ ] Mark Epic as Done.
+    - [ ] Commit changes with message: "fix: Include event description in calendar invites - fixes #22"

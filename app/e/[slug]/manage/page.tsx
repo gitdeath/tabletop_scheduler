@@ -6,6 +6,8 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
+import { FinalizeEventModal } from "./FinalizeEventModal";
+import { generateGoogleCalendarUrl } from "@/lib/googleCalendar";
 
 interface PageProps {
     params: { slug: string };
@@ -25,7 +27,8 @@ async function getEventWithVotes(slug: string) {
                 },
                 orderBy: { startTime: 'asc' }
             },
-            participants: true
+            participants: true,
+            finalizedHost: true
         },
     });
     return event;
@@ -55,6 +58,10 @@ export default async function ManageEventPage({ params }: PageProps) {
         // Perfect now requires a host
         const perfect = yesCount === totalParticipants && totalParticipants > 0 && yesCount >= event.minPlayers && hasHost;
 
+        const potentialHosts = slot.votes
+            .filter(v => (v.preference === 'YES' || v.preference === 'MAYBE') && v.canHost)
+            .map(v => v.participant);
+
         return {
             ...slot,
             yesCount,
@@ -62,7 +69,8 @@ export default async function ManageEventPage({ params }: PageProps) {
             noCount,
             viable,
             perfect,
-            hasHost
+            hasHost,
+            potentialHosts
         };
     });
 
@@ -138,15 +146,51 @@ export default async function ManageEventPage({ params }: PageProps) {
                                         <span className="text-slate-400"> at </span>
                                         <ClientDate date={finalizedSlot.startTime} formatStr="h:mm a" className="font-semibold text-white" />
                                     </p>
+
+
+                                    {(event.finalizedHost || event.location) && (
+                                        <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 inline-block text-left text-sm space-y-2 min-w-[250px]">
+                                            {event.finalizedHost && (
+                                                <div className="flex items-center gap-2 text-slate-300">
+                                                    <span className="text-lg">🏠</span>
+                                                    <span>Hosted by <span className="font-semibold text-white">{event.finalizedHost.name}</span></span>
+                                                </div>
+                                            )}
+                                            {event.location && (
+                                                <div className="flex items-start gap-2 text-slate-300">
+                                                    <span className="text-lg mt-0.5">📍</span>
+                                                    <div>
+                                                        <div className="font-medium text-slate-400 text-xs uppercase tracking-wide">Location</div>
+                                                        <div className="text-white">{event.location}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="flex justify-center">
+                                <div className="flex flex-col sm:flex-row justify-center gap-3">
                                     <a
                                         href={`/api/event/${event.slug}/ics`}
-                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center gap-3 group"
+                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center justify-center gap-3 group"
                                     >
                                         <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
-                                        Add to Calendar
+                                        Download .ics
+                                    </a>
+                                    <a
+                                        href={generateGoogleCalendarUrl({
+                                            title: event.title,
+                                            description: `Hosted by ${event.finalizedHost?.name || 'TBD'}. View Event: ${process.env.NEXT_PUBLIC_APP_URL || ''}/e/${event.slug}`,
+                                            startTime: finalizedSlot.startTime,
+                                            endTime: finalizedSlot.endTime,
+                                            location: event.location
+                                        })}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-900/20 border border-indigo-500 flex items-center justify-center gap-3 group"
+                                    >
+                                        <span className="text-xl group-hover:scale-110 transition-transform">G</span>
+                                        Google Calendar
                                     </a>
                                 </div>
                             </div>
@@ -182,15 +226,11 @@ export default async function ManageEventPage({ params }: PageProps) {
                                                 </div>
                                             </div>
 
-                                            <form action={`/api/event/${event.slug}/finalize`} method="POST" className="w-full sm:w-auto">
-                                                <input type="hidden" name="slotId" value={slot.id} />
-                                                <button
-                                                    type="submit"
-                                                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-indigo-500 font-medium text-sm transition-all"
-                                                >
-                                                    Finalize
-                                                </button>
-                                            </form>
+                                            <FinalizeEventModal
+                                                slug={event.slug}
+                                                slotId={slot.id}
+                                                potentialHosts={slot.potentialHosts}
+                                            />
                                         </div>
                                     ))}
                                 </div>

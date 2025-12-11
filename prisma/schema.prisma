@@ -26,6 +26,9 @@ model Event {
   maxPlayers  Int?
   status      String        @default("DRAFT") // DRAFT, ACTIVE, FINALIZED
   finalizedSlotId Int?
+  finalizedHostId Int?
+  finalizedHost   Participant? @relation("FinalizedHost", fields: [finalizedHostId], references: [id])
+  location        String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   timeSlots   TimeSlot[]
@@ -49,6 +52,7 @@ model Participant {
   telegramId String?
   createdAt  DateTime @default(now())
   votes      Vote[]
+  hostedEvents Event[] @relation("FinalizedHost")
 }
 
 model Vote {

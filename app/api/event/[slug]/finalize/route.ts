@@ -9,19 +9,29 @@ export async function POST(
     try {
         const formData = await req.formData();
         const slotId = formData.get("slotId");
+        const hostId = formData.get("houseId"); // Mapped from UI "houseId" to finalizedHostId
+        const location = formData.get("location");
 
         if (!slotId) {
             return NextResponse.json({ error: "Missing Slot ID" }, { status: 400 });
         }
 
+        const updateData: any = {
+            status: "FINALIZED",
+            finalizedSlotId: parseInt(slotId.toString()),
+            location: location ? location.toString() : null
+        };
+
+        if (hostId) {
+            updateData.finalizedHostId = parseInt(hostId.toString());
+        }
+
         const event = await prisma.event.update({
             where: { slug: params.slug },
-            data: {
-                status: "FINALIZED",
-                finalizedSlotId: parseInt(slotId.toString())
-            },
+            data: updateData,
             include: {
-                timeSlots: true
+                timeSlots: true,
+                finalizedHost: true
             }
         });
 
@@ -40,7 +50,10 @@ export async function POST(
 
             const icsLink = `${origin}/api/event/${event.slug}/ics`;
 
-            const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;
+            let locString = event.location ? `\n📍 ${event.location}` : "";
+            let hostString = event.finalizedHost ? `\n🏠 Hosted by <b>${event.finalizedHost.name}</b>` : "";
+
+            const msg = `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${hostString}${locString}\n\n<a href="${icsLink}">📅 Add to Calendar</a>\n\nSee you there!`;
 
             const msgId = await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
             if (msgId) {

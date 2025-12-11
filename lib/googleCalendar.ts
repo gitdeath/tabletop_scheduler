@@ -1,0 +1,20 @@
+export function generateGoogleCalendarUrl(event: {
+    title: string;
+    description?: string | null;
+    startTime: Date;
+    endTime: Date;
+    location?: string | null;
+}) {
+    const start = event.startTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const end = event.endTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: event.title,
+        dates: `${start}/${end}`,
+        details: event.description || "",
+        location: event.location || "",
+    });
+
+    return `https://www.google.com/calendar/render?${params.toString()}`;
+}

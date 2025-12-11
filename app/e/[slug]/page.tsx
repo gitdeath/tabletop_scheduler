@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { VotingInterface } from "@/components/VotingInterface";
 import { HistoryTracker } from "@/components/HistoryTracker";
 import { format } from "date-fns";
 import { Calendar, Users } from "lucide-react";
 import { ManagerRecovery } from "@/components/ManagerRecovery";
+import { VotingInterface } from "@/components/VotingInterface";
+import { FinalizedEventView } from "@/components/FinalizedEventView";
 
 interface PageProps {
     params: { slug: string };
@@ -25,6 +26,7 @@ async function getEvent(slug: string) {
                 orderBy: { startTime: 'asc' }
             },
             participants: true,
+            finalizedHost: true,
         },
     });
 
@@ -45,6 +47,10 @@ export default async function EventPage({ params }: PageProps) {
         const no = slot.votes.filter(v => v.preference === 'NO').length;
         return { ...slot, counts: { yes, maybe, no } };
     });
+
+    // Determine finalized slot if applicable
+    const isFinalized = event.status === 'FINALIZED' && event.finalizedSlotId;
+    const finalizedSlot = isFinalized ? event.timeSlots.find(s => s.id === event.finalizedSlotId) : null;
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-50 p-4 md:p-8">
@@ -88,13 +94,20 @@ export default async function EventPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                {/* Voting App */}
-                <VotingInterface
-                    eventId={event.id}
-                    initialSlots={slotsWithCounts}
-                    participants={event.participants}
-                    minPlayers={event.minPlayers}
-                />
+                {/* Voting or Finalized View */}
+                {isFinalized && finalizedSlot ? (
+                    <FinalizedEventView
+                        event={event}
+                        finalizedSlot={finalizedSlot}
+                    />
+                ) : (
+                    <VotingInterface
+                        eventId={event.id}
+                        initialSlots={slotsWithCounts}
+                        participants={event.participants}
+                        minPlayers={event.minPlayers}
+                    />
+                )}
 
                 <div className="text-center pt-8 border-t border-slate-800">
                     <p className="text-slate-500 text-sm mb-2">Are you the organizer?</p>

@@ -55,8 +55,8 @@ export default async function ManageEventPage({ params }: PageProps) {
         // But for Quorum, usually we count Yes+Maybe >= MinPlayers
         const viable = (yesCount + maybeCount) >= event.minPlayers;
 
-        // Perfect now requires a host
-        const perfect = yesCount === totalParticipants && totalParticipants > 0 && yesCount >= event.minPlayers && hasHost;
+        // Perfect now requires a host and enough Yes votes
+        const perfect = yesCount >= event.minPlayers && hasHost;
 
         const potentialHosts = slot.votes
             .filter(v => (v.preference === 'YES' || v.preference === 'MAYBE') && v.canHost)
@@ -74,11 +74,26 @@ export default async function ManageEventPage({ params }: PageProps) {
         };
     });
 
-    // Sort: Perfect first, then most YES, then most Viable
+    // Sort: Perfect first, then most YES, then Host Available, then most If Needed
     slots.sort((a, b) => {
+        // 1. Status Category (Perfect > Viable > Low)
+        // We rely on 'perfect' flag for top tier. Viable vs Low is implicit in scores.
         if (a.perfect && !b.perfect) return -1;
         if (!a.perfect && b.perfect) return 1;
+
+        // 2. Has Host House
+        if (a.hasHost && !b.hasHost) return -1;
+        if (!a.hasHost && b.hasHost) return 1;
+
+        // 3. Total Turnout (Yes + Maybe)
+        const aTotal = a.yesCount + a.maybeCount;
+        const bTotal = b.yesCount + b.maybeCount;
+        if (bTotal !== aTotal) return bTotal - aTotal;
+
+        // 4. Total Yes
         if (b.yesCount !== a.yesCount) return b.yesCount - a.yesCount;
+
+        // 5. Time (Implicitly handled by initial sort, but let's be explicit if needed, or rely on stable sort)
         return 0;
     });
 

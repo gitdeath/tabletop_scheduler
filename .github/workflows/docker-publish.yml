@@ -3,8 +3,14 @@ name: Docker Build & Push
 on:
   push:
     branches: [ "main", "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches: [ "main", "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 env:
   # Use docker.io for Docker Hub if empty

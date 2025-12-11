@@ -171,6 +171,18 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                 </div>
 
                 <div className="space-y-4">
+                    {/* Legend for Mobile/Desktop clarity */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-xs text-slate-400 bg-slate-900/30 p-3 rounded-lg border border-slate-800/50">
+                        <div className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-500" />
+                            <span><b>Available:</b> Perfect for me</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <HelpCircle className="w-4 h-4 text-yellow-500" />
+                            <span><b>If Needed:</b> Yes, but not my preference for day</span>
+                        </div>
+                    </div>
+
                     {slots.map(slot => {
                         const start = new Date(slot.startTime);
                         const end = new Date(slot.endTime);

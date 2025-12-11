@@ -27,7 +27,7 @@ This is the public page you share with your players.
     - **Name**: Enter your name (required) and Telegram handle (optional, helps with notifications).
     - **Grid**: Mark your availability for each slot:
         - ✅ **Yes**: I can play.
-        - ⚠️ **If Needed**: I can play if necessary, but prefer not to.
+        - ⚠️ **If Needed**: Yes, but not my preference for day.
         - ❌ **No**: I cannot play.
     - **Submit**: Saves your votes. You can edit them later if you revisit the page on the same device.
 - **Best Slot**: The app automatically highlights the slot with the most "Yes" votes that meets the minimum player count.

@@ -218,7 +218,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                                             color="yellow"
                                             icon={<HelpCircle className="w-5 h-5" />}
                                             label="If Needed"
-                                            title="Yes, but not preferred"
+                                            title="Yes, but not my preference for day."
                                         />
                                         <VoteButton
                                             active={myVote === 'NO'}

@@ -145,7 +145,11 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                                     <div className="space-y-1">
                                         <p className="font-bold">Connect Telegram Notifications</p>
-                                        <p className="opacity-90">Bot not connected yet? Add the bot to your group and it will automatically link to this event.</p>
+                                        <p className="opacity-90 text-xs">
+                                            First, add the bot to your group. Then, <b>paste this page's link</b> into the chat to connect it.
+                                            <br />
+                                            <span className="opacity-75 italic">Already in the group? Just paste the link!</span>
+                                        </p>
                                     </div>
                                 </div>
 

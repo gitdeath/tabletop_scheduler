@@ -11,8 +11,9 @@ import { ManagerControls } from "@/components/ManagerControls";
 import { ClientDate } from "@/components/ClientDate";
 import { FinalizeEventModal } from "./FinalizeEventModal";
 import { EditLocationModal } from "./EditLocationModal";
-import { generateGoogleCalendarUrl } from "@/lib/googleCalendar";
+import { EditLocationModal } from "./EditLocationModal";
 import { getBotUsername } from "@/lib/telegram";
+import { AddToCalendar } from "@/components/AddToCalendar";
 
 interface PageProps {
     params: { slug: string };
@@ -232,76 +233,62 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     )}
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row justify-center gap-3">
-                                    <a
-                                        href={`/api/event/${event.slug}/ics`}
-                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all shadow-lg shadow-black/20 border border-slate-700 flex items-center justify-center gap-3 group"
-                                    >
-                                        <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
-                                        Download .ics
-                                    </a>
-                                    <a
-                                        href={generateGoogleCalendarUrl({
-                                            title: event.title,
-                                            description: `Hosted by ${event.finalizedHost?.name || 'TBD'}. View Event: ${getBaseUrl(headers())}/e/${event.slug}`,
-                                            startTime: finalizedSlot.startTime,
-                                            endTime: finalizedSlot.endTime,
-                                            location: event.location
-                                        })}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-900/20 border border-indigo-500 flex items-center justify-center gap-3 group"
-                                    >
-                                        <span className="text-xl group-hover:scale-110 transition-transform">G</span>
-                                        Google Calendar
-                                    </a>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-xl font-semibold text-slate-200">Proposed Slots</h2>
-                                    <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">Best Options First</span>
-                                </div>
-                                <div className="grid gap-3">
-                                    {slots.length === 0 ? (
-                                        <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                                            No time slots proposed yet.
-                                        </div>
-                                    ) : slots.map(slot => (
-                                        <div key={slot.id} className="group relative p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900/60 transition-colors flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4 w-full sm:w-auto">
-                                                <div className="text-center min-w-[60px] shrink-0">
-                                                    {slot.perfect && <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1 bg-green-900/20 px-1.5 py-0.5 rounded">Perfect</div>}
-                                                    {!slot.hasHost && <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 bg-orange-900/20 px-1.5 py-0.5 rounded">No Host</div>}
-                                                    {slot.viable && !slot.perfect && slot.hasHost && <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 bg-indigo-900/20 px-1.5 py-0.5 rounded">Viable</div>}
-                                                    {!slot.viable && <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1 bg-slate-800/50 px-1.5 py-0.5 rounded">Low T/O</div>}
-                                                </div>
-                                                <div>
-                                                    <div className="font-semibold text-base text-slate-200">
-                                                        <ClientDate date={slot.startTime} formatStr="EEE, MMM d @ h:mm a" />
-                                                    </div>
-                                                    <div className="text-sm text-slate-400 flex gap-3 mt-0.5">
-                                                        <span className="text-green-400 font-medium">{slot.yesCount} Yes</span>
-                                                        <span className="text-yellow-500/80">{slot.maybeCount} If Needed</span>
-                                                        <span className="text-red-900/60">{slot.noCount} No</span>
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            <FinalizeEventModal
-                                                slug={event.slug}
-                                                slotId={slot.id}
-                                                potentialHosts={slot.potentialHosts}
-                                            />
-                                        </div>
-                                    ))}
+                                <div className="border-t border-slate-700/50 pt-6">
+                                    <AddToCalendar 
+                                        event={event} 
+                                        slot={finalizedSlot} 
+                                        className="justify-center"
+                                    />
                                 </div>
                             </div>
-                        )}
+                </div>
+                ) : (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold text-slate-200">Proposed Slots</h2>
+                        <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">Best Options First</span>
+                    </div>
+                    <div className="grid gap-3">
+                        {slots.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                                No time slots proposed yet.
+                            </div>
+                        ) : slots.map(slot => (
+                            <div key={slot.id} className="group relative p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900/60 transition-colors flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4 w-full sm:w-auto">
+                                    <div className="text-center min-w-[60px] shrink-0">
+                                        {slot.perfect && <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1 bg-green-900/20 px-1.5 py-0.5 rounded">Perfect</div>}
+                                        {!slot.hasHost && <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 bg-orange-900/20 px-1.5 py-0.5 rounded">No Host</div>}
+                                        {slot.viable && !slot.perfect && slot.hasHost && <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 bg-indigo-900/20 px-1.5 py-0.5 rounded">Viable</div>}
+                                        {!slot.viable && <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1 bg-slate-800/50 px-1.5 py-0.5 rounded">Low T/O</div>}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-base text-slate-200">
+                                            <ClientDate date={slot.startTime} formatStr="EEE, MMM d @ h:mm a" />
+                                        </div>
+                                        <div className="text-sm text-slate-400 flex gap-3 mt-0.5">
+                                            <span className="text-green-400 font-medium">{slot.yesCount} Yes</span>
+                                            <span className="text-yellow-500/80">{slot.maybeCount} If Needed</span>
+                                            <span className="text-red-900/60">{slot.noCount} No</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <FinalizeEventModal
+                                    slug={event.slug}
+                                    slotId={slot.id}
+                                    potentialHosts={slot.potentialHosts}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
+                        )}
             </div>
         </div>
+            </div >
+        </div >
     );
 }

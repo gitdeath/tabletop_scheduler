@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Calendar, Clock, MapPin, Home, User as UserIcon, Loader2, Check } from "lucide-react";
 import { clsx } from "clsx";
 import { ClientDate } from "./ClientDate";
+import { AddToCalendar } from "./AddToCalendar";
 
 interface FinalizedEventViewProps {
     event: any;
@@ -141,136 +142,10 @@ export function FinalizedEventView({ event, finalizedSlot }: FinalizedEventViewP
                     </div>
 
                     {/* Add to Calendar */}
-                    <div className="grid grid-cols-3 gap-3 border-t border-slate-700/50 pt-6">
-                        <a
-                            href={googleCalendarUrl(event, finalizedSlot)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
-                        >
-                            <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
-                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Google</span>
-                        </a>
-                        <a
-                            href={outlookCalendarUrl(event, finalizedSlot)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
-                        >
-                            <span className="text-xl group-hover:scale-110 transition-transform">📧</span>
-                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Outlook</span>
-                        </a>
-                        <a
-                            href={`/api/event/${event.slug}/ics`}
-                            className="bg-slate-950/40 hover:bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors group"
-                        >
-                            <span className="text-xl group-hover:scale-110 transition-transform">📎</span>
-                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200">Apple/ICS</span>
-                        </a>
+                    <div className="border-t border-slate-700/50 pt-6">
+                        <AddToCalendar
+                            event={event}
+                            slot={finalizedSlot}
+                        />
                     </div>
                 </div>
-
-                {/* Join Section */}
-                {!hasJoined ? (
-                    <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400">
-                                <UserIcon className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white">Join the Adventure</h3>
-                                <p className="text-slate-400 text-sm">Add yourself to the guest list.</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <input
-                                    type="text"
-                                    placeholder="Your Name (Required)"
-                                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 transition-colors"
-                                    value={userName}
-                                    onChange={(e) => setUserName(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Telegram Handle (Optional)"
-                                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 transition-colors"
-                                    value={userTelegram}
-                                    onChange={(e) => setUserTelegram(e.target.value)}
-                                />
-                            </div>
-
-                            <button
-                                onClick={handleJoin}
-                                disabled={isSubmitting}
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                {isSubmitting ? <Loader2 className="animate-spin" /> : "I'm Coming!"}
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="p-6 bg-green-900/10 border border-green-800/30 rounded-xl flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-green-900/30 flex items-center justify-center">
-                            <Check className="w-6 h-6 text-green-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-green-300">You are on the list!</h3>
-                            <p className="text-green-400/60 text-sm">See you at the session.</p>
-                        </div>
-                    </div>
-                )}
-
-            </div>
-
-            {/* RIGHT COLUMN: Guest List */}
-            <div className="space-y-6">
-                <div className="bg-slate-900/30 p-6 rounded-xl border border-slate-800 sticky top-6">
-                    <h3 className="text-lg font-semibold text-slate-300 mb-4 flex items-center justify-between">
-                        <span>Going</span>
-                        <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded text-xs">{attendees.length}</span>
-                    </h3>
-
-                    <ul className="space-y-3">
-                        {attendees.map((p: any) => (
-                            <li key={p.id} className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-xs ring-2 ring-slate-900">
-                                    {p.name.substring(0, 2).toUpperCase()}
-                                </div>
-                                <div>
-                                    <div className={clsx("font-medium", p.id === participantId ? "text-indigo-300" : "text-slate-300")}>
-                                        {p.name} {p.id === participantId && "(You)"}
-                                    </div>
-                                    {p.preference === 'MAYBE' && (
-                                        <div className="text-[10px] text-yellow-500 font-mono uppercase">If Needed</div>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function googleCalendarUrl(event: any, slot: any) {
-    const start = slot.startTime.replace(/[-:]/g, '').split('.')[0] + 'Z';
-    const end = slot.endTime.replace(/[-:]/g, '').split('.')[0] + 'Z';
-    const text = encodeURIComponent(event.title);
-    const details = encodeURIComponent(event.description || "");
-    const location = encodeURIComponent(event.location || "");
-
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}&location=${location}`;
-}
-
-function outlookCalendarUrl(event: any, slot: any) {
-    const start = slot.startTime; // Outlook handles ISO strings reasonably well or requires specific formatting
-    const end = slot.endTime;
-    const text = encodeURIComponent(event.title);
-    const details = encodeURIComponent(event.description || "");
-    const location = encodeURIComponent(event.location || "");
-
-    return `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&startdt=${start}&enddt=${end}&subject=${text}&body=${details}&location=${location}`;
-}

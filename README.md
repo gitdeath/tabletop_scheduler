@@ -9,7 +9,7 @@ TabletopTime helps you find the best time for your gaming group to meet. It is d
 
 ### Key Features
 - **Host**: Create events with multiple time slots and quorum rules (min players).
-- **Vote**: No login required for players. Simple "Yes", "If Needed" (Maybe), or "No" voting.
+- **Vote**: No login required for players. Simple "Yes", "If Needed", or "No" voting.
 - **Finalize**: Select a host/location and generate calendar invites (.ics / Google Calendar).
 - **Telegram Bot**: 
   - Pins a live-updating dashboard in your group chat.
@@ -39,7 +39,7 @@ TabletopTime is configured via environment variables.
 |----------|----------|-------------|-------------------|
 | `DATABASE_URL` | **Yes** | Path to SQLite DB. Must match volume mount. | `file:/app/data/scheduler.db` |
 | `TELEGRAM_BOT_TOKEN` | Optional | Token from @BotFather for notifications. | `123456:ABC...` |
-| `PUBLIC_URL` | Optional | Your external URL (for links in Telegram). | `https://scheduler.example.com` |
+
 | `TZ` | Optional | Timezone for logs/database. | `America/Chicago` |
 
 ## Documentation

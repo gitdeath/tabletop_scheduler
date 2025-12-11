@@ -42,3 +42,6 @@ next-env.d.ts
 /data
 *.db
 *.db-journal
+
+# Workflow
+EPIC_WORKFLOW.md

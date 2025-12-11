@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TimeSlotPicker, TimeSlot } from "@/components/TimeSlotPicker";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck, ChevronDown } from "lucide-react";
 
 export default function NewEventPage() {
     const router = useRouter();
@@ -98,9 +98,24 @@ export default function NewEventPage() {
                                 value={telegramLink}
                                 onChange={(e) => setTelegramLink(e.target.value)}
                             />
-                            <p className="text-xs text-indigo-300">
-                                💡 1. Add bot to group. 2. Paste invite link here. 3. <b>Post the event link in the group</b> so the bot can connect!
-                            </p>
+
+                            <details className="group text-xs text-indigo-300 mt-2 cursor-pointer select-none">
+                                <summary className="flex items-center gap-1.5 hover:text-indigo-200 transition-colors font-medium">
+                                    <span className="bg-indigo-900/50 p-0.5 rounded text-indigo-300 group-open:rotate-180 transition-transform">
+                                        <ChevronDown className="w-3 h-3" />
+                                    </span>
+                                    How to connect a pinned message bot?
+                                </summary>
+                                <div className="mt-2 pl-2 border-l-2 border-indigo-900/50 space-y-2 text-slate-400">
+                                    <p>Get event updates and a pinned dashboard in your group chat:</p>
+                                    <ol className="list-decimal pl-5 space-y-1">
+                                        <li>Add our bot to your Telegram group (and give it <b>Admin</b> rights to Pin).</li>
+                                        <li>Paste the group&apos;s <b>Invite Link</b> above (so players can join).</li>
+                                        <li>Create this event.</li>
+                                        <li><b>Important:</b> Paste the <i>Event Link</i> in your group chat to finish the connection!</li>
+                                    </ol>
+                                </div>
+                            </details>
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -112,8 +127,9 @@ export default function NewEventPage() {
                                 value={managerTelegram}
                                 onChange={(e) => setManagerTelegram(e.target.value)}
                             />
-                            <p className="text-xs text-slate-400">
-                                Needed if you lose the manager link.
+                            <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Used to securely DM you the manager link if you lose it.</span>
                             </p>
                         </div>
 

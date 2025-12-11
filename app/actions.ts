@@ -1,23 +1,20 @@
 "use server";
 
 import { cookies } from "next/headers";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("Actions");
 
 export async function setAdminCookie(slug: string, token: string) {
     const cookieStore = cookies();
-    cookieStore.set(`tabletop_admin_${slug}`, token, {
+    const opts = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "strict" as const,
         path: "/",
         maxAge: 60 * 60 * 24 * 30 // 30 days
-    });
-    cookieStore.set(`tabletop_admin_${slug}`, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30 // 30 days
-    });
+    };
+    cookieStore.set(`tabletop_admin_${slug}`, token, opts);
 }
 
 import prisma from "@/lib/prisma";
@@ -35,9 +32,11 @@ export async function recoverManagerLink(slug: string, handle: string) {
         if (event.adminToken) {
             await setAdminCookie(slug, event.adminToken);
         }
+        log.info("Manager recovery successful", { slug });
         return { success: true, url: `/e/${slug}/manage` };
     }
 
+    log.warn("Manager recovery failed: Handle mismatch", { slug, inputHandle: handle });
     return { error: "Telegram handle does not match our records." };
 }
 
@@ -61,6 +60,8 @@ export async function dmManagerLink(slug: string) {
     // Priority: Dynamic Header -> Localhost Fallback
     const baseUrl = getBaseUrl(headerList);
     const link = `${baseUrl}/e/${slug}/manage`;
+
+    log.info("Sending DM recovery link", { slug, chatId: event.managerChatId });
 
     await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nHere is your link for <b>${event.title}</b>:\n${link}`, process.env.TELEGRAM_BOT_TOKEN!);
 
@@ -91,8 +92,10 @@ export async function updateManagerHandle(slug: string, handle: string) {
             where: { slug },
             data: { managerTelegram: formattedHandle }
         });
+        log.info("Manager handle updated", { slug, handle: formattedHandle });
         return { success: true, handle: formattedHandle };
     } catch (e) {
+        log.error("Failed to update handle", e as Error);
         return { error: "Failed to update handle." };
     }
 }
@@ -105,6 +108,8 @@ export async function deleteEvent(slug: string) {
     if (!event) {
         return { error: "Event not found" };
     }
+
+    log.warn("Deleting event", { slug, title: event.title });
 
     // Attempt to notify and unpin in Telegram if connected
     if (event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
@@ -123,45 +128,37 @@ export async function deleteEvent(slug: string) {
         );
     }
 
-    // Delete from DB (cascade should handle slots/votes if schema set up, but let's see. 
-    // Usually prisma requires explicit cascade in schema or manual cleanup if relation is strict. 
-    // Assuming default Prisma relations often cascade or we just delete the event.)
-    // Actually, check schema: timeSlots TimeSlot[] -> No cascade defined in typical default? 
-    // Wait, typical Prisma One-to-Many defaults to cascade deletion if foreign key constraint exists and is set to CASCADE in SQLite.
-    // Let's rely on Prisma `onDelete: Cascade` if it existed, or we might need transaction. 
-    // Checking schema later, but standard `prisma.event.delete` is usually sufficient if FKs are standard.
-    // actually, let's wrap in transaction to be safe if manual cleanup needed, but `delete` on parent usually throws if children exist without cascade.
-    // Let's assume schema has Cascade or we use deleteMany. 
-    // To be safe against "Foreign Key Constraint failed" without changing schema right now, 
-    // we should delete children first.
+    // Transactional deletion ensures partial failures don't leave orphaned data.
+    // We explicitly delete child records (Votes, TimeSlots, Participants) 
+    // to handle schemas where CASCADE deletion might not be configured.
+    try {
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete Votes (via TimeSlots or Participants)
+            // Manual cleanup is safer than relying on implicit DB cascades in this context.
+            await tx.vote.deleteMany({
+                where: { timeSlot: { eventId: event.id } }
+            });
 
-    return await prisma.$transaction(async (tx) => {
-        // Delete votes (children of TimeSlot, children of Participant)
-        // This is getting deep. Let's hope for Cascade or do it top down.
-        // Actually, simplest is to use `delete` and if it fails, we know we need schema change. 
-        // But to be robust:
+            // 2. Delete TimeSlots
+            await tx.timeSlot.deleteMany({
+                where: { eventId: event.id }
+            });
 
-        // 1. Delete Votes (via TimeSlots or Participants)
-        // It's easier if we just try delete. If it fails, I'll fix schema.
-        await tx.vote.deleteMany({
-            where: { timeSlot: { eventId: event.id } }
+            // 3. Delete Participants
+            await tx.participant.deleteMany({
+                where: { eventId: event.id }
+            });
+
+            // 4. Delete Event
+            await tx.event.delete({
+                where: { id: event.id }
+            });
         });
 
-        // 2. Delete TimeSlots
-        await tx.timeSlot.deleteMany({
-            where: { eventId: event.id }
-        });
-
-        // 3. Delete Participants
-        await tx.participant.deleteMany({
-            where: { eventId: event.id }
-        });
-
-        // 4. Delete Event
-        await tx.event.delete({
-            where: { id: event.id }
-        });
-
+        log.info("Event deleted successfully", { slug });
         return { success: true };
-    });
+    } catch (e) {
+        log.error("Failed to delete event", e as Error);
+        return { error: "Failed to delete event" };
+    }
 }

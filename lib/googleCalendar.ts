@@ -1,3 +1,7 @@
+/**
+ * Generates a link to create a new Google Calendar event.
+ * Pre-fills title, description, start/end time, and location.
+ */
 export function generateGoogleCalendarUrl(event: {
     title: string;
     description?: string | null;
@@ -5,6 +9,7 @@ export function generateGoogleCalendarUrl(event: {
     endTime: Date;
     location?: string | null;
 }) {
+    // Format dates to YYYYMMDDTHHMMSSZ, stripping punctuation as required by GCal API
     const start = event.startTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
     const end = event.endTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
 

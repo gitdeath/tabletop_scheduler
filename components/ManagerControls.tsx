@@ -11,6 +11,10 @@ interface ManagerControlsProps {
     hasManagerChatId: boolean;
 }
 
+/**
+ * Control panel for the event creator.
+ * Allows setting a manager handle, sending recovery links via DM, and deleting the event.
+ */
 export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId }: ManagerControlsProps) {
     const [initialHandle, setInitialHandle] = useState(propsInitialHandle);
     const [hasManagerChatId, setHasManagerChatId] = useState(initialHasId);
@@ -28,7 +32,8 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
     const [error, setError] = useState("");
     const router = useRouter();
 
-    // Poll for status if we don't have the ID yet
+    // Polling mechanism to auto-detect when the user has finally messaged the bot.
+    // This provides immediate feedback on the UI without requiring a manual refresh.
     useEffect(() => {
         if (hasManagerChatId || !initialHandle) return;
 
@@ -130,7 +135,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         try {
             const res = await deleteEvent(slug);
             if ('error' in res) {
-                setError(res.error);
+                setError(res.error || "Unknown error");
                 setIsDeleting(false);
             } else {
                 // Redirect happened on server usually, but just in case

@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { Link2, Check } from "lucide-react";
 
+/**
+ * Button to copy a URL to the clipboard.
+ * Handles both absolute URLs and relative paths (by prepending origin).
+ */
 export function CopyLinkButton({ url }: { url: string }) {
     const [copied, setCopied] = useState(false);
 

@@ -6,6 +6,7 @@ interface EventData {
     description: string | null;
     finalizedHost: { name: string } | null;
     location: string | null;
+    timezone?: string;
 }
 
 interface SlotData {
@@ -13,6 +14,14 @@ interface SlotData {
     endTime: Date;
 }
 
+/**
+ * Constructs the formatted Telegram message for a finalized event.
+ * Includes host details, location, and calendar links (Google + ICS).
+ * 
+ * @param event - The event data including slug, title, and host info.
+ * @param slot - The selected time slot for the event.
+ * @param origin - The base URL of the application (for generating links).
+ */
 export function buildFinalizedMessage(
     event: EventData,
     slot: SlotData,
@@ -32,5 +41,19 @@ export function buildFinalizedMessage(
     let locString = event.location ? `\n📍 ${event.location}` : "";
     let hostString = event.finalizedHost ? `\n🏠 Hosted by <b>${event.finalizedHost.name}</b>` : "";
 
-    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${slotTime.toDateString()}\n⏰ ${slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${hostString}${locString}\n\n<a href="${icsLink}">📅 Add to Calendar (.ics)</a>\n<a href="${googleLink}">G Add to Google Calendar</a>\n\nSee you there!`;
+    const timeString = slotTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: event.timezone || 'UTC',
+        timeZoneName: 'short'
+    });
+
+    const dateString = slotTime.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        timeZone: event.timezone || 'UTC'
+    });
+
+    return `🎉 <b>Event Finalized!</b>\n\n<b>${event.title}</b> is happening on:\n📅 ${dateString}\n⏰ ${timeString}${hostString}${locString}\n\n<a href="${icsLink}">📅 Add to Calendar (.ics)</a>\n<a href="${googleLink}">🗓️ Google Calendar</a>\n\nSee you there!`;
 }

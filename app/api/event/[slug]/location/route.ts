@@ -3,6 +3,9 @@ import prisma from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/url";
 import { buildFinalizedMessage } from "@/lib/eventMessage";
 import { editMessageText } from "@/lib/telegram";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("API:Location");
 
 export async function POST(
     req: Request,
@@ -10,6 +13,8 @@ export async function POST(
 ) {
     try {
         const { location } = await req.json();
+
+        log.info("Updating location", { slug: params.slug });
 
         // Update the location
         const event = await prisma.event.update({
@@ -39,7 +44,7 @@ export async function POST(
 
         return NextResponse.json({ success: true, location: event.location });
     } catch (error) {
-        console.error("Location update failed:", error);
+        log.error("Location update failed", error as Error);
         return NextResponse.json({ error: "Failed to update location" }, { status: 500 });
     }
 }

@@ -20,6 +20,11 @@ interface VotingInterfaceProps {
     minPlayers: number;
 }
 
+/**
+ * Main voting UI for participants.
+ * Handles Name/Telegram input, voting on time slots, and indicating hosting ability.
+ * Persists user identity to localStorage for seamless re-visits.
+ */
 export function VotingInterface({ eventId, initialSlots, participants, minPlayers }: VotingInterfaceProps) {
     const [slots, setSlots] = useState(initialSlots);
     const [userName, setUserName] = useState("");
@@ -30,7 +35,8 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
     const [hasVoted, setHasVoted] = useState(false);
     const [participantId, setParticipantId] = useState<number | null>(null);
 
-    // Load "Remember Me" and previous state
+    // Hydrate state from LocalStorage on mount (client-side only).
+    // helps returning users skip re-entering their name.
     useState(() => {
         if (typeof window !== 'undefined') {
             const savedParticipantId = localStorage.getItem(`tabletop_participant_${eventId}`);
@@ -44,8 +50,7 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
                     setUserName(existing.name);
                     setUserTelegram(existing.telegramId || "");
 
-                    // Pre-fill votes based on existing data
-                    // We need to look at initialSlots to see what they voted
+                    // Reconstruct voting state from server data so they can edit it.
                     const myVotes: Record<number, string> = {};
                     const myHosting: Record<number, boolean> = {};
 

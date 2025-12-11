@@ -1,25 +1,32 @@
 import { sendTelegramMessage } from "./telegram";
 import prisma from "./prisma";
+import Logger from "./logger";
+
+const log = Logger.get("TelegramPoller");
 
 let isPolling = false;
 let lastUpdateId = 0;
 
+/**
+ * Initiates the Telegram Long Polling loop.
+ * Only one instance should run to avoid race conditions.
+ */
 export async function startPolling() {
     if (isPolling) {
-        console.log("⚠️ Telegram Polling already started.");
+        log.warn("Polling already started.");
         return;
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
-        console.log("❌ Telegram Token not found. Polling skipped.");
+        log.warn("Token not found. Polling skipped.");
         return;
     }
 
     isPolling = true;
-    console.log("🚀 Starting Telegram Long Polling...");
+    log.info("🚀 Starting Telegram Long Polling...");
 
-    // Recursive poller
+    // Uses recursion to ensure sequential processing and avoid overlapping calls
     poll(token);
 }
 
@@ -33,7 +40,7 @@ async function poll(token: string) {
         if (!res.ok) {
             // If 409 Conflict, it means a webhook is active. We should delete it.
             if (res.status === 409) {
-                console.log("⚠️ Webhook conflict detected. Deleting Webhook to enable Polling...");
+                log.warn("Webhook conflict detected. Deleting Webhook to enable Polling...");
                 await fetch(`https://api.telegram.org/bot${token}/deleteWebhook`);
                 // Retry immediately
                 setTimeout(() => poll(token), 1000);
@@ -51,7 +58,7 @@ async function poll(token: string) {
             }
         }
     } catch (error) {
-        console.error("Telegram Polling Error (Retrying in 5s):", error);
+        log.error("Polling Error (Retrying in 5s)", error as Error);
         await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
@@ -74,6 +81,10 @@ interface TelegramUpdate {
     };
 }
 
+/**
+ * Detects if a user is a manager based on their username and opportunistically links their ID.
+ * This allows managers to receive DMs (like /start) without an explicit manual link process.
+ */
 async function processUpdate(update: TelegramUpdate, token: string) {
     if (!update.message || !update.message.text) return;
 
@@ -82,14 +93,14 @@ async function processUpdate(update: TelegramUpdate, token: string) {
     const userId = update.message.from?.id;
     const username = update.message.from?.username;
 
-    console.log(`📩 Received Telegram message: "${text}" from Chat: ${chatId}, User: ${userId} (@${username})`);
+    log.debug(`Received message`, { text, chatId, userId, username });
 
-    // --- OPPORTUNISTIC MANAGER DISCOVERY ---
-    // If we see a user whose handle matches a Manager, save their User ID (for DMs)
+    // --- Opportunistic Manager Discovery ---
+    // If we see a user whose handle matches a known Manager in the DB, save their Chat ID.
+    // This allows the bot to DM them later if needed.
     if (userId && username) {
         const handle = "@" + username;
-        // Find events where this user is the manager but we don't have their DM ID yet
-        // OR just always update it to be safe (in case they changed ID/account?)
+        // Find events where this user is the manager but we might not have their numeric ID yet.
         const events = await prisma.event.findMany({
             where: {
                 managerTelegram: { equals: handle },
@@ -103,7 +114,7 @@ async function processUpdate(update: TelegramUpdate, token: string) {
                         where: { id: ev.id },
                         data: { managerChatId: userId.toString() }
                     });
-                    console.log(`[Poller] Linked Manager ID ${userId} for event ${ev.slug}`);
+                    log.info(`Linked Manager ID ${userId} for event ${ev.slug}`);
                 }
             }
             // If this was a /start command, confirm to them
@@ -137,7 +148,7 @@ async function processUpdate(update: TelegramUpdate, token: string) {
             if (linkMatch && linkMatch[1] && linkMatch[2]) {
                 const origin = linkMatch[1]; // e.g. https://mytunnel.com
                 const slug = linkMatch[2];
-                console.log(`[Poller] Detected Event Link: ${origin} -> ${slug}`);
+                log.info(`Detected Event Link: ${origin} -> ${slug}`);
                 await connectEvent(slug, chatId, token, origin);
             }
             // Fallback for just partial text?
@@ -148,11 +159,8 @@ async function processUpdate(update: TelegramUpdate, token: string) {
                 }
             }
         }
-        else if (text.startsWith("/start")) {
-            await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
-        }
     } catch (err) {
-        console.error("Error processing update:", err);
+        log.error("Error processing update", err as Error);
     }
 }
 
@@ -186,7 +194,7 @@ async function connectEvent(slug: string, chatId: number, token: string, detecte
         if (fullEvent) {
             // Use detected URL, or fallback to Env/Localhost via getBaseUrl(null)
             const baseUrl = detectedBaseUrl || getBaseUrl(null);
-            console.log(`[Poller] Initializing Pin with Base URL: ${baseUrl}`);
+            log.info(`Initializing Pin with Base URL: ${baseUrl}`);
 
             const statusMsg = generateStatusMessage(fullEvent, participants, baseUrl);
             const msgId = await sendTelegramMessage(chatId, statusMsg, token);
@@ -199,6 +207,6 @@ async function connectEvent(slug: string, chatId: number, token: string, detecte
             }
         }
     } catch (e) {
-        console.error("Failed to initialize dashboard pin", e);
+        log.error("Failed to initialize dashboard pin", e as Error);
     }
 }

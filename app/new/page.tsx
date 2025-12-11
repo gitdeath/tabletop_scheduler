@@ -17,9 +17,7 @@ export default function NewEventPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Submitting form...", { title, slotsLength: slots.length });
         if (!title || slots.length === 0) {
-            console.log("Validation failed", { title, slotsLength: slots.length });
             return;
         }
 
@@ -35,6 +33,7 @@ export default function NewEventPage() {
                     telegramLink,
                     managerTelegram,
                     minPlayers,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     slots
                 }),
             });

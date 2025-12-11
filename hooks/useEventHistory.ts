@@ -8,10 +8,15 @@ export interface VisitedEvent {
     lastVisited: number;
 }
 
+/**
+ * Hook to manage the user's local history of visited events.
+ * Persists data to localStorage so users can easily return to recent polls.
+ */
 export function useEventHistory() {
     const [history, setHistory] = useState<VisitedEvent[]>([]);
 
     useEffect(() => {
+        // Prevent access during Server-Side Rendering (SSR)
         if (typeof window === 'undefined') return;
 
         try {

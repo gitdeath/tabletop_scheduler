@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("API:ICS");
 
 // Route: /api/event/[slug]/ics
 
@@ -9,6 +12,7 @@ export async function GET(
     { params }: { params: { slug: string } }
 ) {
     try {
+        log.debug("Generating ICS", { slug: params.slug });
         const event = await prisma.event.findUnique({
             where: { slug: params.slug },
             include: { timeSlots: true }
@@ -46,7 +50,7 @@ END:VCALENDAR`.trim();
         });
 
     } catch (error) {
-        console.error(error);
+        log.error("ICS generation failed", error as Error);
         return newResponse("Error", 500);
     }
 }

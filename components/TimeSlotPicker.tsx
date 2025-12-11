@@ -15,18 +15,20 @@ interface TimeSlotPickerProps {
     onChange: (slots: TimeSlot[]) => void;
 }
 
+/**
+ * UI to select multiple date/time ranges.
+ * Validates inputs to ensure end time > start time and prevents duplicates.
+ */
 export function TimeSlotPicker({ value, onChange }: TimeSlotPickerProps) {
     const [date, setDate] = useState("");
     const [start, setStart] = useState("18:00");
     const [end, setEnd] = useState("22:00");
 
     const addSlot = () => {
-        console.log("Attempting to add slot", { date, start, end });
         if (!date || !start || !end) return;
 
-        // Construct full ISO strings
-        // Date input gives YYYY-MM-DD
-        // Time input gives HH:mm
+        // Construct full ISO strings from local inputs.
+        // We use native Date parsing which handles local timezone automatically.
         const startDateTime = new Date(`${date}T${start}:00`);
         const endDateTime = new Date(`${date}T${end}:00`);
         const now = new Date();

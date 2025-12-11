@@ -5,6 +5,10 @@ import { recoverManagerLink } from "@/app/actions";
 import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Modal to recover manager access using the saved Telegram handle.
+ * Used when a user loses their admin cookie but linked their Telegram.
+ */
 export function ManagerRecovery({ slug }: { slug: string }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);

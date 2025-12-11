@@ -1,32 +1,32 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("API:CronCleanup");
 
 export const dynamic = 'force-dynamic'; // Ensure not cached
 
 export async function GET(req: Request) {
     try {
-        // Authenticate cron request (optional, but good practice. For now, we might skipping secret for simplicity or assume local/Internal)
-        // If user wants security, we can check CRON_SECRET from header.
+        log.info("Cleanup job started");
+        // Authenticate cron request via Bearer token (optional security for exposed endpoints)
         const authHeader = req.headers.get('authorization');
         if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            log.warn("Unauthorized cron attempt");
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - 7); // 7 days ago
 
-        // We need to fetch events and filter in code because of complex logic involving relation aggregates which Prisma doesn't always make easy in one query for flexible "MAX" without Raw SQL.
-        // Or we can try to be clever.
-        // Let's fetch all events that COULD be old (e.g. created > 7 days ago is a prerequisite, though updated is better).
-        // Actually, just fetching all active events isn't too expensive for this app scale.
-
+        // Fetch candidate events that might be expired.
+        // We filter in memory for complex logic (e.g. checking "latest slot end time" vs cutoff).
         const candidateEvents = await prisma.event.findMany({
             where: {
                 OR: [
                     { status: 'FINALIZED' },
                     {
-                        // For non-finalized, we need to check their slots.
-                        // We can filter those who have NO slots later, or treat them as cleanup targets if old enough.
+                        // Check non-finalized events with at least one slot
                         timeSlots: { some: {} }
                     }
                 ]
@@ -38,17 +38,14 @@ export async function GET(req: Request) {
 
         const eventsToDelete = candidateEvents.filter(event => {
             if (event.status === 'FINALIZED') {
-                if (!event.finalizedSlotId) return false; // Should not happen if valid
+                if (!event.finalizedSlotId) return false;
                 const slot = event.timeSlots.find(s => s.id === event.finalizedSlotId);
                 if (!slot) return false;
                 return new Date(slot.startTime) < cutoff;
             } else {
-                // Not Finalized: Check if the LATEST slot is still in the past (older than 7 days)
-                // If no slots, maybe check updatedAt? Let's stick to slots for now.
+                // For draft events: Delete if the LAST possible slot was over 7 days ago.
                 if (event.timeSlots.length === 0) {
-                    // If no slots and created > 7 days ago, maybe kill it? 
-                    // Let's say yes to keep DB clean.
-                    return new Date(event.createdAt) < cutoff;
+                    return new Date(event.createdAt) < cutoff; // Orphans
                 }
 
                 const lastEndTime = event.timeSlots.reduce((max, slot) => {
@@ -68,17 +65,13 @@ export async function GET(req: Request) {
 
             for (const event of eventsToDelete) {
                 try {
-                    // Unpin logic
+                    // Cleanup Telegram pins
                     if (event.telegramChatId && event.pinnedMessageId && token) {
                         await unpinChatMessage(event.telegramChatId, event.pinnedMessageId, token);
                     }
 
-                    // Database Cleanup
-                    // Manual cascade just to be safe, though we added delete cascade to deletion logic in action.
-                    // We can reuse deleteEvent logic? But `deleteEvent` is a server action, might redirect or use different return types.
-                    // Better to duplicate the safe deletion logic here or extract it to a shared lib function.
-                    // For now, let's just do transaction here.
-
+                    // Database Deletion
+                    // Uses local transaction to ensure safe, cascading cleanup.
                     await prisma.$transaction(async (tx) => {
                         await tx.vote.deleteMany({ where: { timeSlot: { eventId: event.id } } });
                         await tx.timeSlot.deleteMany({ where: { eventId: event.id } });
@@ -86,10 +79,10 @@ export async function GET(req: Request) {
                         await tx.event.delete({ where: { id: event.id } });
                     });
 
-                    console.log(`[Cron] Deleted expired event: ${event.slug} (${event.title})`);
+                    log.info(`Deleted expired event: ${event.slug} (${event.title})`);
                     deletedCount++;
                 } catch (e) {
-                    console.error(`[Cron] Failed to delete event ${event.slug}`, e);
+                    log.error(`Failed to delete event ${event.slug}`, e as Error);
                     errors++;
                 }
             }
@@ -103,7 +96,7 @@ export async function GET(req: Request) {
         });
 
     } catch (error) {
-        console.error("[Cron] Error:", error);
+        log.error("Cron Error", error as Error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

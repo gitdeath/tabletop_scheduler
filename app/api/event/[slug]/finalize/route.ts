@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("API:Finalize");
 
 export async function POST(
     req: Request,
@@ -12,7 +15,10 @@ export async function POST(
         const hostId = formData.get("houseId"); // Mapped from UI "houseId" to finalizedHostId
         const location = formData.get("location");
 
+        log.info("Request received", { slug: params.slug });
+
         if (!slotId) {
+            log.warn("Missing Slot ID", { slug: params.slug });
             return NextResponse.json({ error: "Missing Slot ID" }, { status: 400 });
         }
 
@@ -57,8 +63,10 @@ export async function POST(
             }
         }
 
+        log.info("Event finalized successfully", { slug: params.slug });
+
     } catch (error) {
-        console.error("Finalize failed:", error);
+        log.error("Finalize failed", error as Error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import Logger from "@/lib/logger";
+
+const log = Logger.get("API:Vote");
 
 export async function POST(
     req: Request,
@@ -11,6 +14,7 @@ export async function POST(
         const { name, telegramId, votes, participantId } = body;
 
         if (!name || !votes || !Array.isArray(votes)) {
+            log.warn("Invalid vote data", { eventId });
             return NextResponse.json({ error: "Invalid data" }, { status: 400 });
         }
 
@@ -87,14 +91,8 @@ export async function POST(
             const { getBaseUrl } = await import("@/lib/url");
             const { headers } = await import("next/headers");
             const headerList = headers();
-
-            console.log(`[Vote] Headers - Host: ${headerList.get('host')}, X-Forwarded-Host: ${headerList.get('x-forwarded-host')}, Proto: ${headerList.get('x-forwarded-proto')}`);
-
             const baseUrl = getBaseUrl(headerList);
-
-            console.log(`[Vote] Generated Base URL: ${baseUrl}`);
             const statusMsg = generateStatusMessage(event, participants, baseUrl);
-            console.log(`[Vote] Generated Status Msg: ${statusMsg}`);
 
             if (event.pinnedMessageId) {
                 // Update existing pin
@@ -113,10 +111,10 @@ export async function POST(
             }
         }
 
-        console.log(`[Vote] Vote processed successfully for participant ${result.id} in event ${eventId}`);
+        log.info(`Vote processed successfully`, { participantId: result.id, eventId });
         return NextResponse.json({ success: true, participantId: result.id });
     } catch (error) {
-        console.error("Vote failed:", error);
+        log.error("Vote failed", error as Error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }

@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { Home, PlusCircle, User, Calendar } from "lucide-react";
 import { clsx } from "clsx";
 
+/**
+ * Global navigation bar.
+ * Highlights current route and provides links to key pages.
+ */
 export function Navbar() {
     const pathname = usePathname();
 

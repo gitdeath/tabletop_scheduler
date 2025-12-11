@@ -11,7 +11,10 @@ export async function GET(
     try {
         const event = await prisma.event.findUnique({
             where: { slug: params.slug },
-            include: { timeSlots: true }
+            include: {
+                timeSlots: true,
+                finalizedHouse: true
+            }
         });
 
         if (!event || event.status !== 'FINALIZED' || !event.finalizedSlotId) {
@@ -25,6 +28,11 @@ export async function GET(
         const start = formatDateICS(new Date(slot.startTime));
         const end = formatDateICS(new Date(slot.endTime));
 
+        let locationField = "";
+        if (event.finalizedHouse) {
+            locationField = `LOCATION:${event.finalizedHouse.name}${event.finalizedHouse.address ? ` (${event.finalizedHouse.address})` : ""}`;
+        }
+
         const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//TabletopTime//EN
@@ -34,6 +42,7 @@ DTSTAMP:${formatDateICS(new Date())}
 DTSTART:${start}
 DTEND:${end}
 SUMMARY:${event.title}
+${locationField}
 DESCRIPTION:${event.description || "Game Night!"}
 END:VEVENT
 END:VCALENDAR`.trim();

@@ -146,7 +146,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <div className="space-y-1">
                                         <p className="font-bold">Connect Telegram Notifications</p>
                                         <p className="opacity-90 text-xs">
-                                            First, add the bot to your group. Then, <b>paste this page's link</b> into the chat to connect it.
+                                            First, add the bot to your group. Then, <b>paste this page&apos;s link</b> into the chat to connect it.
                                             <br />
                                             <span className="opacity-75 italic">Already in the group? Just paste the link!</span>
                                         </p>

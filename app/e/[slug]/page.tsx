@@ -6,6 +6,7 @@ import { Calendar, Users } from "lucide-react";
 import { ManagerRecovery } from "@/components/ManagerRecovery";
 import { VotingInterface } from "@/components/VotingInterface";
 import { FinalizedEventView } from "@/components/FinalizedEventView";
+import Link from "next/link";
 
 interface PageProps {
     params: { slug: string };
@@ -111,12 +112,12 @@ export default async function EventPage({ params }: PageProps) {
 
                 <div className="text-center pt-8 border-t border-slate-800">
                     <p className="text-slate-500 text-sm mb-2">Are you the organizer?</p>
-                    <a
+                    <Link
                         href={`/e/${event.slug}/manage`}
                         className="text-indigo-400 hover:text-indigo-300 underline text-sm transition-colors"
                     >
                         Manage Event & Finalize Time
-                    </a>
+                    </Link>
                 </div>
 
                 <ManagerRecovery slug={event.slug} />

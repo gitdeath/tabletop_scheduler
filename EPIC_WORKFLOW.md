@@ -24,18 +24,18 @@
 ## Epic 3: Event Finalization & Logistics
 **Underlying Issues:** #13, #14
 **Status:** Done
-- [ ] **Phase 1: Investigation**
-    - [ ] Review `House` selection UI in Manager Finalization flow.
-    - [ ] Review Calendar link generation code.
-- [ ] **Phase 2: Planning**
-    - [ ] Design UI for "Select House" and "Add Address" during finalization (Issue #14).
-    - [ ] Design "Google Calendar" link generation (Issue #13).
-    - [ ] Identify potential breaking changes.
-- [ ] **Phase 3: Implementation**
-    - [ ] Update Manager Finalize form to include House/Address.
-    - [ ] Update Email/Telegram notifications with address.
-    - [ ] Implement Google Calendar URL generator.
-    - [ ] Verify fixes against issue requirements.
-- [ ] **Phase 4: Commit**
-    - [ ] Commit changes with message: "feat: Event Finalization & Logistics - fixes #13, #14"
-    - [ ] Mark Epic as Done.
+- [x] **Phase 1: Investigation**
+    - [x] Review `House` selection UI in Manager Finalization flow.
+    - [x] Review Calendar link generation code.
+- [x] **Phase 2: Planning**
+    - [x] Design UI for "Select House" and "Add Address" during finalization (Issue #14).
+    - [x] Design "Google Calendar" link generation (Issue #13).
+    - [x] Identify potential breaking changes.
+- [x] **Phase 3: Implementation**
+    - [x] Update Manager Finalize form to include House/Address.
+    - [x] Update Email/Telegram notifications with address.
+    - [x] Implement Google Calendar URL generator.
+    - [x] Verify fixes against issue requirements.
+- [x] **Phase 4: Commit**
+    - [x] Commit changes with message: "feat: Event Finalization & Logistics - fixes #13, #14"
+    - [x] Mark Epic as Done.

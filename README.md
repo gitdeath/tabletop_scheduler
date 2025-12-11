@@ -1,26 +1,26 @@
 # TabletopTime
 
-A self-hosted, simplified scheduling tool for tabletop gamers. Ditch the group chat chaos and find a time that works for everyone.
+> **Ditch the group chat chaos.** A self-hosted, simplified scheduling tool for tabletop gamers.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## Features
-- **Host**: Create events, propose multiple time slots, set quorum.
-- **Players**: No login required. Vote "Available", "If Needed", or "No".
-- **Telegram Integration**:
-  - Live status dashboard pinned in group chat.
-  - Updates in real-time as users vote.
-  - Manager recovery: DM the bot to regain access to your event.
-  - "Add to Calendar" ICS links for finalized events.
-- **Self-Hosted**: Dockerized, with local SQLite persistence.
-- **Infrastructure**: Optimized for home servers (NAS, Synology, Unraid).
+## Overview
+TabletopTime helps you find the best time for your gaming group to meet. It is designed to be self-hosted on your home server (Synology, Unraid, Rasp Pi) and integrates deeply with Telegram for real-time coordination.
 
-## Quick Start (Pre-built Docker Image)
+### Key Features
+- **Host**: Create events with multiple time slots and quorum rules (min players).
+- **Vote**: No login required for players. Simple "Yes", "If Needed" (Maybe), or "No" voting.
+- **Finalize**: Select a host/location and generate calendar invites (.ics / Google Calendar).
+- **Telegram Bot**: 
+  - Pins a live-updating dashboard in your group chat.
+  - Notifies everyone when an event is finalized.
+- **Privacy-First**: Your data stays on your server (SQLite).
 
-You can pull the latest image directly from the GitHub Container Registry without cloning the code.
+## Quick Start (Docker)
+
+The easiest way to run TabletopTime is using the pre-built Docker image.
 
 ```bash
-# Run with Docker
 docker run -d \
   -p 3000:3000 \
   -v ./data:/app/data \
@@ -29,43 +29,32 @@ docker run -d \
   ghcr.io/gitdeath/tabletop_scheduler:latest
 ```
 
-## Quick Start (Docker Compose from Source)
+Open `http://localhost:3000` to start creating events.
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/gitdeath/tabletop_scheduler.git
-   cd tabletop_scheduler
-   ```
+## Configuration
 
-2. **Run with Docker Compose**
-    ```bash
-    docker-compose up -d
-    ```
-    The app will be available at `http://localhost:3000`.
-    Data will be persisted in a `./data` folder on your host machine.
-
-## Configuration & Environment Variables
-
-The application can be configured via environment variables. These can be passed to Docker with `-e` or defined in a `.env` file for docker-compose.
+TabletopTime is configured via environment variables.
 
 | Variable | Required | Description | Default / Example |
 |----------|----------|-------------|-------------------|
-| `DATABASE_URL` | **Yes** | Connection string for Prisma. For SQLite with Docker, use the mounted volume path. | `file:/app/data/scheduler.db` |
-| `TELEGRAM_BOT_TOKEN` | No | Token from @BotFather for Telegram notifications. | `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11` |
-| `PUBLIC_URL` | No | Public URL for Webhooks (e.g. Reverse Proxy). | `https://scheduler.example.com` |
-| `NODE_ENV` | No | Node Environment. | `production` |
-| `PORT` | No | Port the app listens on internally. | `3000` |
+| `DATABASE_URL` | **Yes** | Path to SQLite DB. Must match volume mount. | `file:/app/data/scheduler.db` |
+| `TELEGRAM_BOT_TOKEN` | Optional | Token from @BotFather for notifications. | `123456:ABC...` |
+| `PUBLIC_URL` | Optional | Your external URL (for links in Telegram). | `https://scheduler.example.com` |
+| `TZ` | Optional | Timezone for logs/database. | `America/Chicago` |
 
-### Volume Persistence
-The container expects to find/store data at `/app/data`.
-- **Database**: The SQLite file (e.g. `scheduler.db`) should be stored here.
-- **Backups**: Ensure this host directory is backed up.
+## Documentation
 
-## Architecture
-- **Framework**: Next.js 14 (App Router)
-- **Database**: SQLite
-- **ORM**: Prisma
-- **Styling**: Tailwind CSS + Shadcn concepts
+- **[Telegram Bot Setup](docs/telegram_setup.md)**: How to create a bot and get your tokens.
+- **[Reverse Proxy Example](docs/examples/nginx.conf)**: Nginx configuration for exposing to the web.
+
+## Development
+
+To build from source:
+
+1. Clone the repo.
+2. `npm install`
+3. `npx prisma generate`
+4. `npm run dev`
 
 ## License
 MIT

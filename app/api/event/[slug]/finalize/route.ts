@@ -42,13 +42,16 @@ export async function POST(
         });
 
         if (event.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
-            const { sendTelegramMessage, unpinChatMessage, pinChatMessage } = await import("@/lib/telegram");
+            const { sendTelegramMessage, deleteMessage, pinChatMessage } = await import("@/lib/telegram");
             const { buildFinalizedMessage } = await import("@/lib/eventMessage");
             const slotTime = event.timeSlots.find((s: any) => s.id === parseInt(slotId.toString()))!;
 
-            // Unpin the previous voting message if it exists
+            // Remove the previous voting message (dashboard)
+            // We use deleteMessage to completely remove it to avoid confusion, 
+            // as requested by the user.
             if (event.pinnedMessageId) {
-                await unpinChatMessage(event.telegramChatId, event.pinnedMessageId, process.env.TELEGRAM_BOT_TOKEN);
+                // Try to delete. If valid, this removes it from chat history.
+                await deleteMessage(event.telegramChatId, event.pinnedMessageId, process.env.TELEGRAM_BOT_TOKEN);
             }
 
             // Determine origin: Headers only (Dynamic)
@@ -60,6 +63,14 @@ export async function POST(
             const msgId = await sendTelegramMessage(event.telegramChatId, msg, process.env.TELEGRAM_BOT_TOKEN);
             if (msgId) {
                 await pinChatMessage(event.telegramChatId, msgId, process.env.TELEGRAM_BOT_TOKEN);
+
+                // CRITICALLY IMPORTANT: Update the pinnedMessageId in the database
+                // so that subsequent updates (like Location changes) target THIS message
+                // and not the old deleted one.
+                await prisma.event.update({
+                    where: { id: event.id },
+                    data: { pinnedMessageId: msgId }
+                });
             }
         }
 

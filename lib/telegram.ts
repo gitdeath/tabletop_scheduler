@@ -146,6 +146,37 @@ export async function editMessageText(chatId: string | number, messageId: number
 }
 
 /**
+ * Deletes a message from a chat.
+ * Used to remove old pinned messages to reduce clutter.
+ */
+export async function deleteMessage(chatId: string | number, messageId: number, token: string) {
+    log.debug(`Deleting message ${messageId} in chat ${chatId}`);
+    const url = `https://api.telegram.org/bot${token}/deleteMessage`;
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                message_id: messageId
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            log.warn("API Error (deleteMessage)", { error: err });
+            return false;
+        }
+
+        log.debug(`Message ${messageId} deleted successfully.`);
+        return true;
+    } catch (e) {
+        log.error("Failed to delete message", e as Error);
+        return false;
+    }
+}
+
+/**
  * Fetches the bot's own details to retrieve the username.
  * Cached to prevent excessive API calls.
  */

@@ -14,6 +14,7 @@ import { EditLocationModal } from "./EditLocationModal";
 import { getBotUsername } from "@/lib/telegram";
 import { AddToCalendar } from "@/components/AddToCalendar";
 import { TelegramConnect } from "@/components/TelegramConnect";
+import { ManagerVoteWarning } from "@/components/ManagerVoteWarning";
 
 interface PageProps {
     params: { slug: string };
@@ -222,6 +223,13 @@ export default async function ManageEventPage({ params }: PageProps) {
                                     <h2 className="text-xl font-semibold text-slate-200">Proposed Slots</h2>
                                     <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">Best Options First</span>
                                 </div>
+
+                                <ManagerVoteWarning
+                                    eventId={event.id}
+                                    participants={event.participants}
+                                    slug={event.slug}
+                                />
+
                                 <div className="grid gap-3">
                                     {slots.length === 0 ? (
                                         <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">

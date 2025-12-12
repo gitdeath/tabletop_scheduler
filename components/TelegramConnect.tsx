@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CopyLinkButton } from "./CopyLinkButton";
-import { updateTelegramInviteLink } from "@/app/actions";
+import { updateTelegramInviteLink, checkEventStatus } from "@/app/actions";
 import { AlertCircle, CheckCircle, HelpCircle, Loader2, Save, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -13,9 +13,10 @@ interface TelegramConnectProps {
     hasChatId: boolean;
 }
 
-export function TelegramConnect({ slug, botUsername, initialTelegramLink, hasChatId }: TelegramConnectProps) {
+export function TelegramConnect({ slug, botUsername, initialTelegramLink, hasChatId: initialHasChatId }: TelegramConnectProps) {
     const router = useRouter();
     const [telegramLink, setTelegramLink] = useState(initialTelegramLink || "");
+    const [hasChatId, setHasChatId] = useState(initialHasChatId);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState("");
 
@@ -25,6 +26,32 @@ export function TelegramConnect({ slug, botUsername, initialTelegramLink, hasCha
     // 'bot_in_group': User said Yes (Show copy link)
     // 'link_saved': Link was just saved, ready to add bot
     const [step, setStep] = useState<'initial' | 'bot_not_in_group' | 'bot_in_group' | 'link_saved'>('initial');
+
+    // Poll for status update when not connected
+    useEffect(() => {
+        if (hasChatId) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const status = await checkEventStatus(slug);
+                if (status.hasTelegramChatId) {
+                    setHasChatId(true);
+                    router.refresh();
+                }
+            } catch (e) {
+                // ignore
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [hasChatId, slug, router]);
+
+    // UI State Steps
+    // 'initial': Asking if bot is in group
+    // 'bot_not_in_group': User said No
+    // 'bot_in_group': User said Yes (Show copy link)
+    // 'link_saved': Link was just saved, ready to add bot
+    // (step state declared above)
 
     const handleSaveLink = async () => {
         if (!telegramLink) return;

@@ -38,19 +38,37 @@ async function poll(token: string) {
         const res = await fetch(url);
 
         if (!res.ok) {
-            // If 409 Conflict, it means a webhook is active. We should delete it.
+            // If 409 Conflict:
+            // 1. "Conflict: terminated by other getUpdates request" -> Another instance is running.
+            // 2. "Conflict: can't use getUpdates method while webhook is active" -> We need to delete webhook.
             if (res.status === 409) {
-                log.warn("Webhook conflict detected. Deleting Webhook to enable Polling...");
+                const errData = await res.json();
+                const description = errData.description || "";
 
-                const { deleteWebhook } = await import("./telegram");
-                await deleteWebhook(token);
+                if (description.includes("terminated by other getUpdates request")) {
+                    log.warn("Conflict: Keep-alive terminated by another instance. Retrying...");
+                    // Just retry, don't delete webhook.
+                    // Random backoff to desynchronize instances
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+                    poll(token);
+                    return;
+                }
 
-                // Wait a bit for Telegram to propagate the deletion
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                if (description.includes("webhook is active")) {
+                    log.warn("Webhook conflict detected. Deleting Webhook to enable Polling...");
 
-                // Retry immediately
-                poll(token);
-                return;
+                    const { deleteWebhook } = await import("./telegram");
+                    await deleteWebhook(token);
+
+                    // Wait a bit for Telegram to propagate the deletion
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    // Retry immediately
+                    poll(token);
+                    return;
+                }
+
+                log.warn(`Unknown 409 Conflict: ${description}`);
             }
             throw new Error(`Telegram API Error: ${res.statusText}`);
         }

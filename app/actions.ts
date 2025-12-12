@@ -79,6 +79,17 @@ export async function checkManagerStatus(slug: string) {
     };
 }
 
+export async function checkEventStatus(slug: string) {
+    const event = await prisma.event.findUnique({
+        where: { slug },
+        select: { telegramChatId: true }
+    });
+
+    return {
+        hasTelegramChatId: !!event?.telegramChatId
+    };
+}
+
 export async function updateManagerHandle(slug: string, handle: string) {
     if (!handle || handle.trim().length < 2) {
         return { error: "Handle must be at least 2 characters." };

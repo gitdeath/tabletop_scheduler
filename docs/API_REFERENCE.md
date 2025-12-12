@@ -20,7 +20,6 @@ Example: `https://your-domain.com/api/event`
   "title": "D&D Session 0",
   "description": "Character creation night!",
   "minPlayers": 3,
-  "managerTelegram": "@user_handle",
   "slots": [
     { "startTime": "2023-11-01T18:00:00.000Z", "endTime": "2023-11-01T22:00:00.000Z" }
   ]
@@ -82,9 +81,10 @@ Example: `https://your-domain.com/api/event`
 **Description:** Removes old/expired events to keep the database size manageable. Designed to be called by an external scheduler (e.g., GitHub Actions, cron-job.org, or system cron).
 
 **Authentication:** 
-Requires `Authorization: Bearer <CRON_SECRET>` header if `CRON_SECRET` env var is set.
+- **Localhost/Internal:** No authentication required (checks IP `127.0.0.1` or `::1`).
+- **External:** Requires `Authorization: Bearer <CRON_SECRET>` header (if `CRON_SECRET` env var is set).
 
 **Behavior:**
-- Deletes finalized events where the chosen slot was > 7 days ago.
-- Deletes draft events where the *last possible* slot was > 7 days ago.
+- Runs automatically daily at 03:00 UTC (via internal cron).
+- Deletes events based on configured retention days (Default: 1 day).
 - Unpins Telegram status messages before deletion.

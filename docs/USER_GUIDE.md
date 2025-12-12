@@ -8,8 +8,6 @@ Welcome to **Tabletop Time**, the privacy-focused scheduler for your gaming sess
 Use this form to set up a new session.
 - **Event Title**: The name of your session (e.g., "D&D Campaign Session 4").
 - **Description**: Optional details about what you're playing or what players need to bring.
-- **Telegram Invite Link**: If you have a Telegram group, paste the invite link here. This helps the bot (if used) provide a "Join Chat" button to attendees.
-- **Your Telegram Handle**: Enter your username (e.g., `@MyHandle`). This is crucial for **Account Recovery**—if you lose the manager link, you can ask the bot to DM it to you.
 - **Minimum Players**: The logic engine uses this to highlight "Valid" slots where enough people are available.
 - **Propose Time Slots**: Click "Add Time Slot" to pick dates and times. You can add as many as you like.
 
@@ -39,8 +37,8 @@ This is the public page you share with your players.
 
 As the organizer, you use this page to control the event.
 - **Manager Controls**:
-    - **Manager Handle**: Update your recovery handle.
-    - **DM Me Manager Link**: If the bot knows you, it can send you a private link to this manager page (useful if you switch devices).
+    - **Setup Recovery**: If you haven't connected a group yet, click "DM Me the Magic Link" to let the bot capture your details.
+    - **DM Me Manager Link**: Once connected, use this to get a private login link sent to your Telegram DMs.
     - **Bot Status**: Shows if the Telegram bot is connected to your group.
 - **Finalize Event**:
     - Select the winning time slot.

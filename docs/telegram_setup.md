@@ -28,7 +28,8 @@ TabletopTime uses **Polling** to check for messages. This means:
 ## 4. Using the Bot
 1. Create an Event in TabletopTime.
 2. Go to the **Manager Dashboard** for your event.
-3. Click the **"Add Bot to Group"** button.
+3. **Optional:** Click "DM Me the Magic Link" to securely link your Telegram account to the event (for recovery).
+4. Click the **"Add Bot to Group"** button (or "Connect Telegram Notifications").
    - This will open Telegram and prompt you to add the bot as an Admin.
 4. Once added, the bot will automatically detect the event link if you pasted it, OR you can simply paste the link now.
 5. The bot will automatically post the event dashboard to the group.

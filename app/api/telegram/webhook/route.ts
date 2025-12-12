@@ -51,16 +51,17 @@ export async function POST(req: Request) {
                 if (parts.length > 1 && parts[1].startsWith("setup_recovery_")) {
                     const slug = parts[1].replace("setup_recovery_", "");
                     await connectEvent(slug, chatId, update.message.from, token);
-                    // connectEvent handles the logic, but let's ensure we give specific feedback if it was this specific flow?
-                    // actually connectEvent auto-detects based on sender. 
-                    // But we might want connectEvent to return a status so we can reply specifically?
-                    // For now, connectEvent sends a generic "Connected" message. 
-                    // Let's rely on that for simplicity, or modify connectEvent slightly to handle context.
-                    // Given the plan says: "Send confirmation message: '✅ Recovery setup!'"
-                    // We can just rely on the existing connectEvent logic which updates the manager if needed.
+                } else if (parts.length > 1 && (parts[1] === "login" || parts[1] === "recover_handle")) {
+                    // Global Login Flow
+                    await handleGlobalLogin(chatId, update.message.from, token);
                 } else {
                     await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
                 }
+            }
+
+            // PASSIVE CAPTURE: Always try to capture/update Participant Chat ID
+            if (update.message.from?.username) {
+                await captureParticipantIdentity(chatId, update.message.from);
             }
         }
 
@@ -69,6 +70,70 @@ export async function POST(req: Request) {
         log.error("Telegram Webhook Error", error as Error);
         return NextResponse.json({ ok: false }, { status: 500 });
     }
+}
+
+async function captureParticipantIdentity(chatId: number, user: any) {
+    const prisma = (await import("@/lib/prisma")).default;
+    const username = user.username;
+    // Normalize handle: remove @, lowercase
+    const handle = username.toLowerCase().replace('@', '');
+    const chatIdStr = chatId.toString();
+
+    // Find all participants with this handle that MISS a chatId
+    // We do this to "Backfill" identity for anyone who voted with this handle before
+    try {
+        // Note: Prisma sqlite doesn't support insensitive directly easily without raw, but we can do a broad check.
+        // Or better: Use updateMany directly if we are confident in the handle format stored.
+        // The App stores handles as they differ (some with @, some without).
+        // Let's search broadly: name equals handle OR telegramId equals handle (or @handle)
+
+        // Ideally we only update records where telegramId matches @handle or handle
+        const formattedHandle = `@${handle}`;
+
+        const count = await prisma.participant.updateMany({
+            where: {
+                OR: [
+                    { telegramId: handle },
+                    { telegramId: formattedHandle },
+                    // Also check case-insensitive matches if possible? SQLite is case-sensitive by default for equal, 
+                    // but often people type it differently. For now, strict match on what they typed during vote.
+                ],
+                chatId: null // Only update if missing
+            },
+            data: {
+                chatId: chatIdStr
+            }
+        });
+
+        if (count.count > 0) {
+            log.info("Passively captured participant Chat IDs", { handle, count: count.count, chatId });
+        }
+    } catch (e) {
+        log.error("Failed passive capture", e as Error);
+    }
+}
+
+async function handleGlobalLogin(chatId: number, user: any, token: string) {
+    const prisma = (await import("@/lib/prisma")).default;
+    const { sendTelegramMessage } = await import("@/lib/telegram");
+    const { getBaseUrl } = await import("@/lib/url");
+    const { headers } = await import("next/headers");
+
+    // 1. Create Login Token
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min expiry
+
+    const loginToken = await prisma.loginToken.create({
+        data: {
+            chatId: chatId.toString(),
+            expiresAt
+        }
+    });
+
+    const baseUrl = getBaseUrl(headers());
+    const magicLink = `${baseUrl}/auth/login?token=${loginToken.token}`;
+
+    await sendTelegramMessage(chatId, `🔐 <b>Magic Login</b>\n\nClick here to access <b>My Events</b>:\n${magicLink}\n\n(Valid for 15 minutes)`, token);
 }
 
 async function connectEvent(slug: string, chatId: number, user: any, token: string) {

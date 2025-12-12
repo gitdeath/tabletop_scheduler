@@ -69,7 +69,8 @@ model Participant {
   event      Event    @relation(fields: [eventId], references: [id])
   eventId    Int
   name       String
-  telegramId String?
+  telegramId String? // The @handle (string)
+  chatId     String? // The numeric Chat ID (captured via webhook)
   createdAt  DateTime @default(now())
   
   votes      Vote[]
@@ -87,3 +88,12 @@ model Vote {
   preference    String      // YES: Available, MAYBE: If needed, NO: Busy
   canHost       Boolean     @default(false) // Specific willingness to host this slot
 }
+
+// Temporary tokens for global "My Events" login
+model LoginToken {
+  token     String   @id @default(uuid())
+  chatId    String   // The Telegram Chat ID being authenticated
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+

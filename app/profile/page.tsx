@@ -1,89 +1,62 @@
-"use client";
+import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { ProfileDashboard } from "./ProfileDashboard";
 
-import { useEventHistory } from "@/hooks/useEventHistory";
-import Link from "next/link";
-import { ArrowLeft, User as UserIcon, Calendar, Clock } from "lucide-react";
-import { useEffect, useState } from "react";
-import { format } from "date-fns";
+export const dynamic = "force-dynamic";
 
-export default function ProfilePage() {
-    const { history, validateHistory } = useEventHistory();
-    const [userName, setUserName] = useState("");
+export default async function ProfilePage() {
+    const cookieStore = cookies();
+    const userChatId = cookieStore.get("tabletop_user_chat_id")?.value;
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setUserName(localStorage.getItem('tabletop_username') || "Guest");
-            // Validate history (remove deleted events)
-            validateHistory();
+    let serverEvents: any[] = [];
+
+    if (userChatId) {
+        try {
+            // 1. Fetch Managed Events
+            const managed = await prisma.event.findMany({
+                where: { managerChatId: userChatId },
+                select: { slug: true, title: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' }
+            });
+
+            // 2. Fetch Participated Events
+            // We use findMany on Participant then map, or use where logic on Event
+            const participated = await prisma.participant.findMany({
+                where: { chatId: userChatId },
+                include: { event: { select: { slug: true, title: true, updatedAt: true } } },
+                orderBy: { event: { updatedAt: 'desc' } }
+            });
+
+            const managedMapped = managed.map(e => ({
+                slug: e.slug,
+                title: e.title,
+                role: 'MANAGER',
+                lastVisited: e.updatedAt.toISOString()
+            }));
+
+            const participatedMapped = participated.map(p => ({
+                slug: p.event.slug,
+                title: p.event.title,
+                role: 'PARTICIPANT',
+                lastVisited: p.event.updatedAt.toISOString()
+            }));
+
+            // Merge and Dedupe (Manager role takes precedence)
+            const map = new Map();
+            [...participatedMapped, ...managedMapped].forEach(e => {
+                if (map.has(e.slug)) {
+                    if (e.role === 'MANAGER') map.set(e.slug, e);
+                } else {
+                    map.set(e.slug, e);
+                }
+            });
+
+            serverEvents = Array.from(map.values());
+
+        } catch (e) {
+            console.error("Failed to fetch server events", e);
         }
-    }, [validateHistory]);
+    }
 
-    return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-12">
-            <div className="max-w-3xl mx-auto space-y-8">
-                <Link href="/" className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors mb-4">
-                    <ArrowLeft className="w-4 h-4" /> Back Home
-                </Link>
-
-                <div className="flex items-center gap-4 pb-8 border-b border-slate-800">
-                    <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400">
-                        <UserIcon className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-100">
-                            Hello, {userName}
-                        </h1>
-                        <p className="text-slate-400">Welcome to your event dashboard.</p>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <h2 className="text-xl font-semibold text-slate-200 flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-indigo-400" />
-                        Recent Events
-                    </h2>
-
-                    {history.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500 border border-dashed border-slate-800 rounded-lg">
-                            <p>You haven&apos;t visited any events yet.</p>
-                            <Link href="/new" className="mt-4 inline-block px-4 py-2 bg-indigo-600 rounded-lg text-white text-sm font-medium hover:bg-indigo-500 transition-colors">
-                                Create an Event
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="grid gap-4">
-                            {history.map(event => (
-                                <Link
-                                    key={event.slug}
-                                    href={`/e/${event.slug}`}
-                                    className="group block p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-indigo-500/30 transition-all"
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className="font-semibold text-lg group-hover:text-indigo-300 transition-colors">
-                                                {event.title}
-                                            </h3>
-                                            <p className="text-xs text-slate-500 font-mono mt-1">
-                                                {format(new Date(event.lastVisited), "MMM d, yyyy")}
-                                            </p>
-                                        </div>
-                                        <ArrowRightIcon className="w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div >
-        </div >
-    )
-}
-
-function ArrowRightIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-        </svg>
-    )
+    return <ProfileDashboard serverEvents={serverEvents} />;
 }

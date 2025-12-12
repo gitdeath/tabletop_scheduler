@@ -44,6 +44,43 @@ export function useEventHistory() {
         }
     }, []);
 
+    const bulkMerge = useCallback((events: { slug: string, title: string, lastVisited?: number }[]) => {
+        try {
+            const current = JSON.parse(localStorage.getItem('tabletop_history') || "[]") as VisitedEvent[];
+            const currentMap = new Map(current.map(e => [e.slug, e]));
+
+            let changed = false;
+
+            events.forEach(e => {
+                if (!currentMap.has(e.slug)) {
+                    currentMap.set(e.slug, {
+                        slug: e.slug,
+                        title: e.title,
+                        lastVisited: e.lastVisited || Date.now()
+                    });
+                    changed = true;
+                } else {
+                    // Update title if changed? Optional.
+                    // Update lastVisited? Maybe not, keep local usage.
+                    // But if server says it's newer?
+                    // Let's just ensure it exists.
+                }
+            });
+
+            if (changed) {
+                // Convert back to array and sort by lastVisited
+                const updated = Array.from(currentMap.values())
+                    .sort((a, b) => b.lastVisited - a.lastVisited)
+                    .slice(0, 50); // Increased limit for synced events
+
+                localStorage.setItem('tabletop_history', JSON.stringify(updated));
+                setHistory(updated);
+            }
+        } catch (e) {
+            console.error("Failed to bulk merge", e);
+        }
+    }, []);
+
     const validateHistory = useCallback(async () => {
         try {
             const current = JSON.parse(localStorage.getItem('tabletop_history') || "[]");
@@ -71,5 +108,5 @@ export function useEventHistory() {
         }
     }, []);
 
-    return { history, addToHistory, validateHistory };
+    return { history, addToHistory, bulkMerge, validateHistory };
 }

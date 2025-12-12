@@ -256,3 +256,98 @@ export async function cancelEvent(slug: string) {
         return { error: "Failed to cancel event" };
     }
 }
+
+export async function sendGlobalMagicLink(handle: string) {
+    const normalize = (h: string) => h.toLowerCase().replace('@', '').trim();
+    const cleanHandle = normalize(handle);
+    const formattedHandle = handle.startsWith('@') ? handle : `@${handle}`;
+
+    if (cleanHandle.length < 2) {
+        return { error: "Please enter a valid Telegram handle." };
+    }
+
+    try {
+        // 1. Find User by Chat ID (look for ANY record that has a chat ID for this handle)
+        // We look in Participant records first as they are most common
+        const participant = await prisma.participant.findFirst({
+            where: {
+                OR: [
+                    { telegramId: cleanHandle },
+                    { telegramId: formattedHandle }
+                ],
+                NOT: { chatId: null }
+            },
+            select: { chatId: true }
+        });
+
+        // Also check Manager records if not found
+        let chatId = participant?.chatId;
+        if (!chatId) {
+            const manager = await prisma.event.findFirst({
+                where: {
+                    managerTelegram: formattedHandle, // Managers usually have @ enforced
+                    NOT: { managerChatId: null }
+                },
+                select: { managerChatId: true }
+            });
+            chatId = manager?.managerChatId;
+        }
+
+        // 2. Logic Branch
+        if (chatId) {
+            // Case A: User is Known & Verified (Has Chat ID) -> Send Link
+            const { sendTelegramMessage } = await import("@/lib/telegram");
+            const { getBaseUrl } = await import("@/lib/url");
+            const { headers } = await import("next/headers");
+
+            // Create temporary login token
+            const expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+            const loginToken = await prisma.loginToken.create({
+                data: {
+                    chatId: chatId,
+                    expiresAt
+                }
+            });
+
+            const baseUrl = getBaseUrl(headers());
+            const magicLink = `${baseUrl}/auth/login?token=${loginToken.token}`;
+
+            await sendTelegramMessage(
+                chatId,
+                `🔐 <b>Magic Login Requested</b>\n\nSomeone (hopefully you) requested a link to view all your events.\n\n👉 <a href="${magicLink}">Click here to Login</a>\n\n(Valid for 15 minutes)`,
+                process.env.TELEGRAM_BOT_TOKEN!
+            );
+
+            return { success: true, message: "Magic Link sent to your Telegram DMs!" };
+
+        } else {
+            // Case B: User has records but NO Chat ID (or no records at all)
+            // We can't verify them, so we can't send a link.
+            // We prompt them to start the bot.
+
+            // Should we check if they even exist?
+            const exists = await prisma.participant.count({
+                where: { OR: [{ telegramId: cleanHandle }, { telegramId: formattedHandle }] }
+            }) > 0 || await prisma.event.count({
+                where: { managerTelegram: formattedHandle }
+            }) > 0;
+
+            if (exists) {
+                return {
+                    error: "UNLINKED",
+                    message: "We found your events, but the bot hasn't verified you yet.",
+                    deepLink: `https://t.me/${process.env.TELEGRAM_BOT_USERNAME || "TabletopSchedulerBot"}?start=recover_handle`
+                };
+            } else {
+                return { error: "No events found for this handle." };
+            }
+        }
+
+    } catch (e) {
+        log.error("Global recovery failed", e as Error);
+        return { error: "System error. Please try again." };
+    }
+}
+

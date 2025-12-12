@@ -43,8 +43,8 @@ ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl libc6-compat
+# Install OpenSSL for Prisma and curl for internal cron
+RUN apk add --no-cache openssl libc6-compat curl
 
 # Create data directory and set permissions (ensure it exists for volume mount points)
 # Create data directory and set permissions (ensure it exists for volume mount points)

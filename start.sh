@@ -19,6 +19,13 @@ ls -ld /app/data
 echo "⚙️ Running database migrations..."
 npx prisma migrate deploy
 
+# Setup Internal Cron Job (Daily at 3AM UTC)
+echo "⏰ Setting up internal cleanup cron..."
+echo "0 3 * * * curl http://127.0.0.1:3000/api/cron/cleanup >> /app/data/cron.log 2>&1" > /tmp/crontab
+crontab /tmp/crontab
+crond -b -L /app/data/cron.log
+echo "✅ Cron daemon started."
+
 # Start the application
 echo "🟢 Starting Next.js server..."
 exec node server.js

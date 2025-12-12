@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { dmManagerLink, checkManagerStatus, deleteEvent, cancelEvent } from "@/app/actions";
-import { MessageCircle, Loader2, Trash2, AlertTriangle, Send } from "lucide-react";
+import { MessageCircle, Loader2, Trash2, AlertTriangle, Send, Check as CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ManagerControlsProps {
@@ -105,14 +105,14 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
             <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
                 <h3 className="font-semibold text-slate-200 flex items-center gap-2">
                     <MessageCircle className="w-4 h-4 text-indigo-400" />
-                    Manager Controls
+                    Manager Recovery
                 </h3>
 
                 {!hasManagerChatId ? (
                     // Setup Mode (No Chat ID yet)
                     <div className="space-y-3">
                         <p className="text-sm text-slate-400">
-                            Not going to connect the bot to a group? Setup magic link recovery!
+                            Not going to connect the bot to a group? Register to receive magic login links via DM.
                         </p>
 
                         <a
@@ -122,7 +122,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                             className="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-transparent shadow-lg shadow-indigo-900/20"
                         >
                             <Send className="w-4 h-4" />
-                            DM Me the Magic Link
+                            Register for Magic Links
                         </a>
                         <p className="text-[10px] text-slate-500 text-center">
                             (This will open Telegram and start the bot to secure your link)
@@ -130,16 +130,21 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                     </div>
                 ) : (
                     // Connected Mode (Has Chat ID)
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 px-3 py-2 rounded-lg border border-green-900/50">
+                            <CheckIcon className="w-4 h-4 shrink-0" />
+                            <span className="font-medium">Registered for Magic Links</span>
+                        </div>
+
                         {initialHandle && (
-                            <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
+                            <div className="flex items-center justify-between text-sm text-slate-400 gap-4 px-1">
                                 <span className="shrink-0">Manager Handle:</span>
                                 <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
                             </div>
                         )}
 
-                        {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
-                        {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
+                        {message && <p className="text-green-400 text-sm font-medium px-1">{message}</p>}
+                        {error && <p className="text-red-400 text-sm font-medium px-1">{error}</p>}
 
                         <button
                             onClick={handleDM}
@@ -149,7 +154,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                                 : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
                                 }`}
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "DM Me Manager Link"}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Magic Link"}
                         </button>
                     </div>
                 )}

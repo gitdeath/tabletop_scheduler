@@ -85,7 +85,6 @@ export async function POST(req: Request) {
 }
 
 async function captureManagerIdentity(chatId: number, user: any) {
-    const prisma = (await import("@/lib/prisma")).default;
     const username = user.username;
     // CRITICAL: Use the User's ID for personal messaging, not the Group Chat ID
     const userId = user.id?.toString();
@@ -118,7 +117,6 @@ async function captureManagerIdentity(chatId: number, user: any) {
 }
 
 async function captureParticipantIdentity(chatId: number, user: any) {
-    const prisma = (await import("@/lib/prisma")).default;
     const username = user.username;
     // CRITICAL: Use the User's ID for personal messaging, not the Group Chat ID
     const userId = user.id?.toString();
@@ -162,9 +160,6 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, reco
         await sendTelegramMessage(chatId, "⚠️ <b>Link Expired or Invalid</b>\n\nPlease go back to the Manage page and click the button again.", token);
         return;
     }
-
-    const prisma = (await import("@/lib/prisma")).default;
-    const { sendTelegramMessage } = await import("@/lib/telegram");
 
     const event = await prisma.event.findUnique({ where: { slug } });
 
@@ -211,8 +206,6 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, reco
 }
 
 async function handleGlobalLogin(chatId: number, user: any, token: string) {
-    const prisma = (await import("@/lib/prisma")).default;
-    const { sendTelegramMessage } = await import("@/lib/telegram");
     const { getBaseUrl } = await import("@/lib/url");
     const { headers } = await import("next/headers");
 
@@ -234,9 +227,6 @@ async function handleGlobalLogin(chatId: number, user: any, token: string) {
 }
 
 async function connectEvent(slug: string, chatId: number, user: any, token: string) {
-    const prisma = (await import("@/lib/prisma")).default;
-    const { sendTelegramMessage } = await import("@/lib/telegram");
-
     const event = await prisma.event.findUnique({ where: { slug } });
 
     if (!event) {

@@ -44,11 +44,30 @@ export async function POST(
 
             // 2. If no valid existing participant found, create new
             if (!participant) {
+                // Try to find an existing chatId for this user from other events to link them immediately
+                let existingChatId = null;
+                if (telegramId) {
+                    const linkedParams = {
+                        where: {
+                            OR: [
+                                { telegramId: telegramId },
+                                { telegramId: telegramId.startsWith('@') ? telegramId : `@${telegramId}` }
+                            ],
+                            NOT: { chatId: null }
+                        },
+                        select: { chatId: true }
+                    };
+                    // Use standard prisma, not tx, to look outside this transaction scope if needed (though tx is fine)
+                    const match = await tx.participant.findFirst(linkedParams);
+                    existingChatId = match?.chatId;
+                }
+
                 participant = await tx.participant.create({
                     data: {
                         eventId,
                         name,
                         telegramId,
+                        chatId: existingChatId // Inherit identity if known
                     },
                 });
             }

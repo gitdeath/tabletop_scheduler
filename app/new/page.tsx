@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TimeSlotPicker, TimeSlot } from "@/components/TimeSlotPicker";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function NewEventPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [managerTelegram, setManagerTelegram] = useState("");
     const [minPlayers, setMinPlayers] = useState(3);
     const [slots, setSlots] = useState<TimeSlot[]>([]);
 
@@ -29,8 +28,7 @@ export default function NewEventPage() {
                 body: JSON.stringify({
                     title,
                     description,
-                    // telegramLink removed from create flow
-                    managerTelegram,
+                    // telegramLink & managerTelegram removed from create flow
                     minPlayers,
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     slots
@@ -90,20 +88,7 @@ export default function NewEventPage() {
 
 
 
-                        <div className="flex flex-col gap-2">
-                            <label className="font-semibold text-slate-200">Your Telegram Handle (For Recovery)</label>
-                            <input
-                                type="text"
-                                placeholder="@YourHandle"
-                                className="px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-600"
-                                value={managerTelegram}
-                                onChange={(e) => setManagerTelegram(e.target.value)}
-                            />
-                            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>Used to securely DM you the manager link if you lose it.</span>
-                            </p>
-                        </div>
+
 
                         <div className="flex flex-col gap-2">
                             <label className="font-semibold text-slate-200">Minimum Players</label>

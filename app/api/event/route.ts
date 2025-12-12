@@ -17,7 +17,7 @@ function generateSlug() {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title, description, minPlayers, slots, telegramLink, managerTelegram } = body;
+        const { title, description, minPlayers, slots, telegramLink } = body;
 
         log.debug("Request received", { title });
 
@@ -35,7 +35,6 @@ export async function POST(req: Request) {
                 title,
                 description,
                 telegramLink,
-                managerTelegram,
                 timezone: body.timezone || "UTC",
                 minPlayers: minPlayers || 3,
                 status: "DRAFT",

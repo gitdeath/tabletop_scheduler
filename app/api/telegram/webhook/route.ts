@@ -33,7 +33,7 @@ export async function POST(req: Request) {
                     return NextResponse.json({ ok: true });
                 }
                 const slug = parts[1].trim();
-                await connectEvent(slug, chatId, token);
+                await connectEvent(slug, chatId, update.message.from, token);
             }
             // 2. Auto-Detect Link: https://.../e/[slug]
             else if (text.includes("/e/")) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
                 const match = text.match(/\/e\/([a-zA-Z0-9]+)/);
                 if (match && match[1]) {
                     const slug = match[1];
-                    await connectEvent(slug, chatId, token);
+                    await connectEvent(slug, chatId, update.message.from, token);
                 }
             }
             else if (text.startsWith("/start")) {
@@ -57,30 +57,53 @@ export async function POST(req: Request) {
     }
 }
 
-async function connectEvent(slug: string, chatId: number, token: string) {
+async function connectEvent(slug: string, chatId: number, user: any, token: string) {
     const prisma = (await import("@/lib/prisma")).default;
     const { sendTelegramMessage } = await import("@/lib/telegram");
 
     const event = await prisma.event.findUnique({ where: { slug } });
 
     if (!event) {
-        // Silent fail on link detection? Or nice error?
-        // If it was a random link, maybe silent. But if it looked like ours...
-        // Let's rely on the regex being specific enough to our detected implementation? 
-        // Actually, we can't be sure it's OUR event if the domain isn't checked, but slug collision is rare.
-        // Let's just ignore if not found to avoid spamming on random links.
         log.warn("Connect failed: Event not found", { slug });
         return;
+    }
+
+    // Auto-Capture Manager Logic
+    const senderUsername = user?.username;
+    const senderId = user?.id?.toString();
+
+    let updateData: any = { telegramChatId: chatId.toString() };
+    let capturedMsg = "";
+
+    // 1. If no manager is set yet, assume the person connecting the bot is the manager.
+    if (!event.managerTelegram && senderUsername) {
+        updateData.managerTelegram = senderUsername;
+        // Also set their personal chat ID if we have it (for DMs)
+        // Note: The webhook usually comes from the group chat, but 'message.from' is the user.
+        // We can't DM them unless they've started the bot privately, but we can save the ID.
+        if (senderId) {
+            updateData.managerChatId = senderId;
+        }
+        capturedMsg = `\n\n👮 <b>Manager Set:</b> @${senderUsername}`;
+    }
+    // 2. If the sender IS the manager, update their Chat ID (Repair/Link DM)
+    else if (event.managerTelegram && senderUsername &&
+        event.managerTelegram.toLowerCase().replace('@', '') === senderUsername.toLowerCase()) {
+        if (senderId) {
+            updateData.managerChatId = senderId;
+            capturedMsg = `\n\n✅ <b>Manager Verified</b>`;
+        }
     }
 
     // Connect
     await prisma.event.update({
         where: { id: event.id },
-        data: { telegramChatId: chatId.toString() }
+        data: updateData
     });
 
-    log.info("Connected chat to event", { chatId, slug });
+    log.info("Connected chat to event", { chatId, slug, manager: updateData.managerTelegram });
 
+    await sendTelegramMessage(chatId, `✅ <b>Connected!</b>\nThis group is now linked to: <b>${event.title}</b>${capturedMsg}`, token);
 }
 
 

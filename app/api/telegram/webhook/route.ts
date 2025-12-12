@@ -46,7 +46,21 @@ export async function POST(req: Request) {
                 }
             }
             else if (text.startsWith("/start")) {
-                await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
+                const parts = text.split(" ");
+                // Sub-payload: /start setup_recovery_[slug]
+                if (parts.length > 1 && parts[1].startsWith("setup_recovery_")) {
+                    const slug = parts[1].replace("setup_recovery_", "");
+                    await connectEvent(slug, chatId, update.message.from, token);
+                    // connectEvent handles the logic, but let's ensure we give specific feedback if it was this specific flow?
+                    // actually connectEvent auto-detects based on sender. 
+                    // But we might want connectEvent to return a status so we can reply specifically?
+                    // For now, connectEvent sends a generic "Connected" message. 
+                    // Let's rely on that for simplicity, or modify connectEvent slightly to handle context.
+                    // Given the plan says: "Send confirmation message: '✅ Recovery setup!'"
+                    // We can just rely on the existing connectEvent logic which updates the manager if needed.
+                } else {
+                    await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
+                }
             }
         }
 
@@ -103,7 +117,12 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
 
     log.info("Connected chat to event", { chatId, slug, manager: updateData.managerTelegram });
 
-    await sendTelegramMessage(chatId, `✅ <b>Connected!</b>\nThis group is now linked to: <b>${event.title}</b>${capturedMsg}`, token);
+    // Customize message if this was purely a DM recovery setup
+    if (chatId.toString() === senderId && updateData.managerChatId) {
+        await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've linked your account to <b>${event.title}</b>.\nIf you ever lose your link, just click "DM Me Manager Link" on the event page.`, token);
+    } else {
+        await sendTelegramMessage(chatId, `✅ <b>Connected!</b>\nThis group is now linked to: <b>${event.title}</b>${capturedMsg}`, token);
+    }
 }
 
 

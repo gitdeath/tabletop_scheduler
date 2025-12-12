@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { dmManagerLink, checkManagerStatus, updateManagerHandle, deleteEvent, cancelEvent } from "@/app/actions";
-import { MessageCircle, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
+import { dmManagerLink, checkManagerStatus, deleteEvent, cancelEvent } from "@/app/actions";
+import { MessageCircle, Loader2, Trash2, AlertTriangle, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ManagerControlsProps {
@@ -10,19 +10,16 @@ interface ManagerControlsProps {
     initialHandle: string | null;
     hasManagerChatId: boolean;
     isFinalized: boolean;
+    botUsername: string;
 }
 
 /**
  * Control panel for the event creator.
- * Allows setting a manager handle, sending recovery links via DM, and deleting/canceling the event.
+ * Allows simplified One-Click setup for manager recovery via Telegram DMs.
  */
-export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId, isFinalized }: ManagerControlsProps) {
+export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId, isFinalized, botUsername }: ManagerControlsProps) {
     const [initialHandle, setInitialHandle] = useState(propsInitialHandle);
     const [hasManagerChatId, setHasManagerChatId] = useState(initialHasId);
-
-    // Form state for adding handle
-    const [newHandle, setNewHandle] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
 
     // Delete state
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -34,15 +31,16 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
     const router = useRouter();
 
     // Polling mechanism to auto-detect when the user has finally messaged the bot.
-    // This provides immediate feedback on the UI without requiring a manual refresh.
     useEffect(() => {
-        if (hasManagerChatId || !initialHandle) return;
+        // Poll if we don't have a chat ID yet, regardless of whether we have a handle (since we now capture handle via this flow)
+        if (hasManagerChatId) return;
 
         const interval = setInterval(async () => {
             try {
                 const status = await checkManagerStatus(slug);
                 if (status.hasManagerChatId) {
                     setHasManagerChatId(true);
+                    if (status.handle) setInitialHandle(status.handle);
                     router.refresh();
                 }
             } catch (e) {
@@ -51,7 +49,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [hasManagerChatId, initialHandle, slug, router]);
+    }, [hasManagerChatId, slug, router]);
 
     const handleDM = async () => {
         if (!hasManagerChatId) return;
@@ -71,27 +69,6 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
             setError("Failed to send request.");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSaveHandle = async () => {
-        if (!newHandle) return;
-        setIsSaving(true);
-        setError("");
-
-        try {
-            const res = await updateManagerHandle(slug, newHandle);
-            if (res.error) {
-                setError(res.error);
-            } else if (res.success && res.handle) {
-                setInitialHandle(res.handle);
-                setNewHandle("");
-                router.refresh();
-            }
-        } catch (e) {
-            setError("Failed to save handle.");
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -131,39 +108,35 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                     Manager Controls
                 </h3>
 
-                {!initialHandle ? (
-                    // Setup Mode (No handle yet)
+                {!hasManagerChatId ? (
+                    // Setup Mode (No Chat ID yet)
                     <div className="space-y-3">
                         <p className="text-sm text-slate-400">
-                            Set a Telegram handle to enable manager features (like link recovery).
+                            Not going to connect the bot to a group? Setup magic link recovery!
                         </p>
 
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                placeholder="@username"
-                                value={newHandle}
-                                onChange={(e) => setNewHandle(e.target.value)}
-                                className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
-                            />
-                            <button
-                                onClick={handleSaveHandle}
-                                disabled={isSaving || !newHandle.trim()}
-                                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                            >
-                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Save
-                            </button>
-                        </div>
-                        {error && <p className="text-red-400 text-xs">{error}</p>}
+                        <a
+                            href={`https://t.me/${botUsername}?start=setup_recovery_${slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-transparent shadow-lg shadow-indigo-900/20"
+                        >
+                            <Send className="w-4 h-4" />
+                            DM Me the Magic Link
+                        </a>
+                        <p className="text-[10px] text-slate-500 text-center">
+                            (This will open Telegram and start the bot to secure your link)
+                        </p>
                     </div>
                 ) : (
-                    // Connected Mode (Has handle)
+                    // Connected Mode (Has Chat ID)
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
-                            <span className="shrink-0">Manager Handle:</span>
-                            <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
-                        </div>
+                        {initialHandle && (
+                            <div className="flex items-center justify-between text-sm text-slate-400 gap-4">
+                                <span className="shrink-0">Manager Handle:</span>
+                                <span className="font-mono text-slate-300 truncate">{initialHandle}</span>
+                            </div>
+                        )}
 
                         {message && <p className="text-green-400 text-sm font-medium">{message}</p>}
                         {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
@@ -176,25 +149,8 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                                 : "bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/30"
                                 }`}
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                                (!hasManagerChatId ? <span className="flex items-center gap-2">Waiting for Connection... <Loader2 className="w-3 h-3 animate-spin opacity-50" /></span> : "DM Me Manager Link")}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "DM Me Manager Link"}
                         </button>
-
-                        {!hasManagerChatId && (
-                            <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-200/80">
-                                <p>
-                                    🤖 <strong>Bot doesn&apos;t know you yet!</strong> <br />
-                                    To enable this button:
-                                </p>
-                                <ul className="list-disc pl-4 mt-1 space-y-1">
-                                    <li>DM the bot <code>/start</code></li>
-                                    <li>OR paste a link in a group with the bot</li>
-                                </ul>
-                            </div>
-                        )}
-                        <p className="text-[10px] text-slate-500 text-center">
-                            (Requires you to have started the bot)
-                        </p>
                     </div>
                 )}
             </div>

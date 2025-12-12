@@ -87,11 +87,12 @@ export async function dmManagerLink(slug: string) {
 export async function checkManagerStatus(slug: string) {
     const event = await prisma.event.findUnique({
         where: { slug },
-        select: { managerChatId: true }
+        select: { managerChatId: true, managerTelegram: true }
     });
 
     return {
-        hasManagerChatId: !!event?.managerChatId
+        hasManagerChatId: !!event?.managerChatId,
+        handle: event?.managerTelegram
     };
 }
 

@@ -152,7 +152,8 @@ export default async function ManageEventPage({ params }: PageProps) {
                             slug={event.slug}
                             initialHandle={event.managerTelegram}
                             hasManagerChatId={!!event.managerChatId}
-                            isFinalized={isFinalized}
+                            isFinalized={event.status === "FINALIZED" || event.status === "CANCELLED"}
+                            botUsername={process.env.TELEGRAM_BOT_USERNAME || "YourBot"}
                         />
                     </div>
 

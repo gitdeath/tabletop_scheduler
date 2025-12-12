@@ -47,11 +47,21 @@ export async function POST(req: Request) {
             }
             else if (text.startsWith("/start")) {
                 const parts = text.split(" ");
-                // Sub-payload: /start setup_recovery_[slug]
-                // Sub-payload: /start setup_recovery_[slug]
+                // Sub-payload: /start setup_recovery_[slug]_[token]
                 if (parts.length > 1 && parts[1].startsWith("setup_recovery_")) {
-                    const slug = parts[1].replace("setup_recovery_", "");
-                    await handleRecoverySetup(chatId, update.message.from, slug, token);
+                    const payload = parts[1].replace("setup_recovery_", "");
+
+                    // Format: slug_token
+                    const lastUnderscoreIndex = payload.lastIndexOf('_');
+                    if (lastUnderscoreIndex === -1) {
+                        await sendTelegramMessage(chatId, "⚠️ Invalid Link format.", token);
+                        return NextResponse.json({ ok: true });
+                    }
+
+                    const slug = payload.substring(0, lastUnderscoreIndex);
+                    const recoveryToken = payload.substring(lastUnderscoreIndex + 1);
+
+                    await handleRecoverySetup(chatId, update.message.from, slug, recoveryToken, token);
                 } else if (parts.length > 1 && (parts[1] === "login" || parts[1] === "recover_handle")) {
                     // Global Login Flow
                     await handleGlobalLogin(chatId, update.message.from, token);
@@ -113,8 +123,7 @@ async function captureParticipantIdentity(chatId: number, user: any) {
     // CRITICAL: Use the User's ID for personal messaging, not the Group Chat ID
     const userId = user.id?.toString();
 
-    if (!userId) return; // Can't link without ID. Username optional for existing participants? 
-    // Actually participants are matched by handle usually.
+    if (!userId) return;
 
     // Normalize handle: remove @, lowercase
     const handle = username ? username.toLowerCase().replace('@', '') : null;
@@ -146,7 +155,14 @@ async function captureParticipantIdentity(chatId: number, user: any) {
     }
 }
 
-async function handleRecoverySetup(chatId: number, user: any, slug: string, token: string) {
+async function handleRecoverySetup(chatId: number, user: any, slug: string, recoveryToken: string, token: string) {
+    // Verify Security Token
+    const { verifyRecoveryToken } = await import("@/lib/token");
+    if (!verifyRecoveryToken(slug, recoveryToken)) {
+        await sendTelegramMessage(chatId, "⚠️ <b>Link Expired or Invalid</b>\n\nPlease go back to the Manage page and click the button again.", token);
+        return;
+    }
+
     const prisma = (await import("@/lib/prisma")).default;
     const { sendTelegramMessage } = await import("@/lib/telegram");
 
@@ -157,19 +173,14 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, toke
         return;
     }
 
-    // This flow is ONLY for the manager to verify themselves via DM.
-    // We do NOT set the `telegramChatId` (Group ID) here.
-
-    // Check if the user is the manager
     const senderUsername = user.username?.toLowerCase();
-
     if (!senderUsername) {
         await sendTelegramMessage(chatId, "⚠️ Could not verify identity. Please ensure you have a Telegram username set.", token);
         return;
     }
 
     const managerHandle = event.managerTelegram?.toLowerCase().replace('@', '');
-    let updateData: any = { managerChatId: user.id.toString() }; // Use user.id (Personal)
+    let updateData: any = { managerChatId: user.id.toString() };
     let claimMessage = "";
 
     // 1. If NO manager is set, this user CLAIMS it.
@@ -182,7 +193,7 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, toke
     else {
         if (senderUsername !== managerHandle) {
             // Security: Don't link if handles mismatch
-            await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.\n\nIf you changed your handle, please update it on the event page first.`, token);
+            await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.`, token);
             return;
         }
     }
@@ -251,9 +262,6 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
     // 1. If no manager is set yet, assume the person connecting the bot is the manager.
     if (!event.managerTelegram && senderUsername) {
         updateData.managerTelegram = senderUsername;
-        // Also set their personal chat ID if we have it (for DMs)
-        // Note: The webhook usually comes from the group chat, but 'message.from' is the user.
-        // We can't DM them unless they've started the bot privately, but we can save the ID.
         if (senderId) {
             updateData.managerChatId = senderId;
         }
@@ -280,12 +288,7 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
 
     log.info("Connected chat to event", { chatId, slug, updates: updateData });
 
-    // Customize message if this was purely a DM recovery setup
-    if (chatId.toString() === senderId && updateData.managerChatId) {
-        await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've linked your account to <b>${event.title}</b>.\nIf you ever lose your link, just click "DM Me Manager Link" on the event page.`, token);
-    } else {
-        await sendTelegramMessage(chatId, `✅ <b>Connected!</b>\nThis group is now linked to: <b>${event.title}</b>${capturedMsg}`, token);
-    }
+    // Customize message if this was purely a DM recovery setup - Wait, ConnectEvent is for Groups usually. 
+    // Recovery via SetupRecovery is separate. 
+    await sendTelegramMessage(chatId, `✅ <b>Connected!</b>\nThis group is now linked to: <b>${event.title}</b>${capturedMsg}`, token);
 }
-
-

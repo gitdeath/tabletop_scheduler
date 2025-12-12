@@ -157,6 +157,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                             hasManagerChatId={!!event.managerChatId}
                             isFinalized={event.status === "FINALIZED" || event.status === "CANCELLED"}
                             botUsername={botUsername || 'TabletopSchedulerBot'}
+                            recoveryToken={require('@/lib/token').generateRecoveryToken(event.slug)}
                         />
                     </div>
 

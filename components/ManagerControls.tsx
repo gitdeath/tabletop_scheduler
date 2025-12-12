@@ -11,13 +11,14 @@ interface ManagerControlsProps {
     hasManagerChatId: boolean;
     isFinalized: boolean;
     botUsername: string;
+    recoveryToken: string;
 }
 
 /**
  * Control panel for the event creator.
  * Allows simplified One-Click setup for manager recovery via Telegram DMs.
  */
-export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId, isFinalized, botUsername }: ManagerControlsProps) {
+export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasManagerChatId: initialHasId, isFinalized, botUsername, recoveryToken }: ManagerControlsProps) {
     const [initialHandle, setInitialHandle] = useState(propsInitialHandle);
     const [hasManagerChatId, setHasManagerChatId] = useState(initialHasId);
 
@@ -116,7 +117,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                         </p>
 
                         <a
-                            href={`https://t.me/${botUsername}?start=setup_recovery_${slug}`}
+                            href={`https://t.me/${botUsername}?start=setup_recovery_${slug}_${recoveryToken}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-transparent shadow-lg shadow-indigo-900/20"
@@ -209,4 +210,3 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
         </div>
     );
 }
-

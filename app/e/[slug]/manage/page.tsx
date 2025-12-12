@@ -16,6 +16,7 @@ import { getBotUsername } from "@/lib/telegram";
 import { AddToCalendar } from "@/components/AddToCalendar";
 import { TelegramConnect } from "@/components/TelegramConnect";
 import { ManagerVoteWarning } from "@/components/ManagerVoteWarning";
+import { generateShortRecoveryToken } from "@/app/actions";
 
 interface PageProps {
     params: { slug: string };
@@ -157,7 +158,7 @@ export default async function ManageEventPage({ params }: PageProps) {
                             hasManagerChatId={!!event.managerChatId}
                             isFinalized={event.status === "FINALIZED" || event.status === "CANCELLED"}
                             botUsername={botUsername || 'TabletopSchedulerBot'}
-                            recoveryToken={require('@/lib/token').generateRecoveryToken(event.slug)}
+                            recoveryToken={(await generateShortRecoveryToken(event.slug)).token || ""}
                         />
                     </div>
 

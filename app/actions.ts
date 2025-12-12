@@ -351,3 +351,27 @@ export async function sendGlobalMagicLink(handle: string) {
     }
 }
 
+export async function generateShortRecoveryToken(slug: string) {
+    const crypto = await import('crypto');
+    // Generate a short 8-character hex token (4 bytes)
+    const token = crypto.randomBytes(4).toString('hex');
+
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    try {
+        await prisma.event.update({
+            where: { slug },
+            data: {
+                recoveryToken: token,
+                recoveryTokenExpires: expiresAt
+            }
+        });
+        return { success: true, token };
+    } catch (e) {
+        log.error("Failed to generate recovery token", e as Error);
+        return { error: "Failed to generate token" };
+    }
+}
+
+

@@ -157,14 +157,22 @@ async function processUpdate(update: TelegramUpdate, token: string) {
                 await handleRecoverySetup(chatId, user, slug, recoveryToken, token);
                 return;
             }
+            // New Short Token Recovery
+            else if (parts.length > 1 && parts[1].startsWith("rec_")) {
+                const recToken = parts[1].replace("rec_", "");
+                await handleShortLinkRecovery(chatId, user, recToken, token);
+                return;
+            }
             // Paint: login or recover_handle
             else if (parts.length > 1 && (parts[1] === "login" || parts[1] === "recover_handle")) {
                 await handleGlobalLogin(chatId, user, token);
                 return;
             }
             // Standard /start (Welcome)
+            // Standard /start (Welcome)
             else {
-                await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
+                // Silent fail to avoid spam
+                // await sendTelegramMessage(chatId, "Hello! Just **paste a link** to a TabletopTime event to connect me!", token);
                 return;
             }
         }
@@ -374,4 +382,63 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
     } catch (e) {
         log.error("Failed to initialize dashboard pin", e as Error);
     }
+}
+
+async function handleShortLinkRecovery(chatId: number, user: any, recoveryToken: string, botToken: string) {
+    // 1. Find event by token
+    const event = await prisma.event.findUnique({
+        where: { recoveryToken },
+    });
+
+    if (!event) {
+        await sendTelegramMessage(chatId, "⚠️ <b>Invalid Recovery Link</b>\n\nThis link is invalid or has expired.", botToken);
+        return;
+    }
+
+    if (!event.recoveryTokenExpires || new Date() > event.recoveryTokenExpires) {
+        await sendTelegramMessage(chatId, "⚠️ <b>Expired Link</b>\n\nThis recovery link has expired. Please refresh the Manage page to get a new one.", botToken);
+        return;
+    }
+
+    // 2. Clear the token (security: one-time use)
+    await prisma.event.update({
+        where: { id: event.id },
+        data: { recoveryToken: null, recoveryTokenExpires: null }
+    });
+
+    // 3. User Identity Logic
+    const senderUsername = user.username?.toLowerCase();
+    if (!senderUsername) {
+        await sendTelegramMessage(chatId, "⚠️ Could not verify identity. Please ensure you have a Telegram username set.", botToken);
+        return;
+    }
+
+    const managerHandle = event.managerTelegram?.toLowerCase().replace('@', '');
+    let updateData: any = { managerChatId: user.id.toString() };
+    let claimMessage = "";
+
+    // If NO manager is set, this user CLAIMS it.
+    if (!managerHandle) {
+        updateData.managerTelegram = senderUsername;
+        claimMessage = `\n\n👮 <b>Manager Set:</b> @${senderUsername}`;
+        log.info("Manager claimed event via short-link recovery", { slug: event.slug, manager: senderUsername });
+    }
+    // If manager IS set, verify identity
+    else {
+        if (senderUsername !== managerHandle) {
+            await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.`, botToken);
+            return;
+        }
+    }
+
+    // Link matches!
+    await prisma.event.update({
+        where: { id: event.id },
+        data: updateData
+    });
+
+    log.info("Manager recovery linked successfully via short-link", { slug: event.slug, manager: senderUsername, chatId: user.id });
+
+    // Send success
+    await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've verified you as the manager of <b>${event.title}</b>.${claimMessage}\n\nThe event page on your device should update in a few seconds.`, botToken);
 }

@@ -117,7 +117,7 @@ export function ManagerControls({ slug, initialHandle: propsInitialHandle, hasMa
                         </p>
 
                         <a
-                            href={`https://t.me/${botUsername}?start=setup_recovery_${slug}_${recoveryToken}`}
+                            href={`https://t.me/${botUsername}?start=rec_${recoveryToken}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-transparent shadow-lg shadow-indigo-900/20"

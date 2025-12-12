@@ -32,6 +32,10 @@ model Event {
   managerChatId   String?   // Creator's numeric ID (for private bot DMs)
   pinnedMessageId Int?      // ID of the pinned status message to update/unpin
   
+  // Recovery
+  recoveryToken        String?   @unique // Short temporary token for deep linking
+  recoveryTokenExpires DateTime?
+  
   // Game Configuration
   minPlayers  Int           @default(3)
   maxPlayers  Int?

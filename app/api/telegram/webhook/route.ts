@@ -76,10 +76,12 @@ export async function POST(req: Request) {
 async function captureManagerIdentity(chatId: number, user: any) {
     const prisma = (await import("@/lib/prisma")).default;
     const username = user.username;
-    if (!username) return;
+    // CRITICAL: Use the User's ID for personal messaging, not the Group Chat ID
+    const userId = user.id?.toString();
+
+    if (!username || !userId) return;
 
     const handle = username.toLowerCase().replace('@', '');
-    const chatIdStr = chatId.toString();
     const formattedHandle = `@${handle}`;
 
     try {
@@ -88,17 +90,16 @@ async function captureManagerIdentity(chatId: number, user: any) {
             where: {
                 managerTelegram: {
                     in: [handle, formattedHandle]
-                    // Note: managers usually have strict @ format validation but good to be safe
                 },
                 managerChatId: null
             },
             data: {
-                managerChatId: chatIdStr
+                managerChatId: userId
             }
         });
 
         if (count.count > 0) {
-            log.info("Passively captured Manager Chat IDs", { handle, count: count.count, chatId });
+            log.info("Passively captured Manager Chat IDs", { handle, count: count.count, userId });
         }
     } catch (e) {
         log.error("Failed passive manager capture", e as Error);
@@ -108,19 +109,19 @@ async function captureManagerIdentity(chatId: number, user: any) {
 async function captureParticipantIdentity(chatId: number, user: any) {
     const prisma = (await import("@/lib/prisma")).default;
     const username = user.username;
+    // CRITICAL: Use the User's ID for personal messaging, not the Group Chat ID
+    const userId = user.id?.toString();
+
+    if (!userId) return; // Can't link without ID. Username optional for existing participants? 
+    // Actually participants are matched by handle usually.
+
     // Normalize handle: remove @, lowercase
-    const handle = username.toLowerCase().replace('@', '');
-    const chatIdStr = chatId.toString();
+    const handle = username ? username.toLowerCase().replace('@', '') : null;
 
     // Find all participants with this handle that MISS a chatId
-    // We do this to "Backfill" identity for anyone who voted with this handle before
     try {
-        // Note: Prisma sqlite doesn't support insensitive directly easily without raw, but we can do a broad check.
-        // Or better: Use updateMany directly if we are confident in the handle format stored.
-        // The App stores handles as they differ (some with @, some without).
-        // Let's search broadly: name equals handle OR telegramId equals handle (or @handle)
+        if (!handle) return;
 
-        // Ideally we only update records where telegramId matches @handle or handle
         const formattedHandle = `@${handle}`;
 
         const count = await prisma.participant.updateMany({
@@ -128,18 +129,16 @@ async function captureParticipantIdentity(chatId: number, user: any) {
                 OR: [
                     { telegramId: handle },
                     { telegramId: formattedHandle },
-                    // Also check case-insensitive matches if possible? SQLite is case-sensitive by default for equal, 
-                    // but often people type it differently. For now, strict match on what they typed during vote.
                 ],
                 chatId: null // Only update if missing
             },
             data: {
-                chatId: chatIdStr
+                chatId: userId
             }
         });
 
         if (count.count > 0) {
-            log.info("Passively captured participant Chat IDs", { handle, count: count.count, chatId });
+            log.info("Passively captured participant Chat IDs", { handle, count: count.count, userId });
         }
     } catch (e) {
         log.error("Failed passive capture", e as Error);

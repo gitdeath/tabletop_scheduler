@@ -57,6 +57,32 @@ Example: `https://your-domain.com/api/event`
 { "success": true, "participantId": 456 }
 ```
 
+## Host Operations
+
+### Magic Link Auth
+**Endpoint:** `GET /api/event/[slug]/auth`
+**Description:** detailed logic for processing admin tokens from Telegram.
+**Query Params:** `?token=[uuid]` from the database.
+**Response:** Redirects to `/manage` on success or `?error` on failure.
+
+### Finalize Event
+**Endpoint:** `POST /api/event/[slug]/finalize`
+**Description:** Selects a final time slot and locks the event.
+**Headers:** `Content-Type: multipart/form-data`
+**Body:**
+- `slotId`: ID of the TimeSlot.
+- `houseId`: (Optional) Participant ID of the host.
+- `location`: (Optional) String text for location.
+
+### Update Location
+**Endpoint:** `POST /api/event/[slug]/location`
+**Description:** Updates location string *after* finalization.
+**Body (JSON):** `{ "location": "New Place" }`
+
+### ICS Export
+**Endpoint:** `GET /api/event/[slug]/ics`
+**Description:** Downloads an iCalendar file for the finalized event.
+
 ---
 
 ## Integrations

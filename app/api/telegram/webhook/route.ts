@@ -62,6 +62,7 @@ export async function POST(req: Request) {
             // PASSIVE CAPTURE: Always try to capture/update Participant Chat ID
             if (update.message.from?.username) {
                 await captureParticipantIdentity(chatId, update.message.from);
+                await captureManagerIdentity(chatId, update.message.from);
             }
         }
 
@@ -69,6 +70,38 @@ export async function POST(req: Request) {
     } catch (error) {
         log.error("Telegram Webhook Error", error as Error);
         return NextResponse.json({ ok: false }, { status: 500 });
+    }
+}
+
+async function captureManagerIdentity(chatId: number, user: any) {
+    const prisma = (await import("@/lib/prisma")).default;
+    const username = user.username;
+    if (!username) return;
+
+    const handle = username.toLowerCase().replace('@', '');
+    const chatIdStr = chatId.toString();
+    const formattedHandle = `@${handle}`;
+
+    try {
+        // Find events where this user is the manager but has NO chat ID yet
+        const count = await prisma.event.updateMany({
+            where: {
+                managerTelegram: {
+                    in: [handle, formattedHandle]
+                    // Note: managers usually have strict @ format validation but good to be safe
+                },
+                managerChatId: null
+            },
+            data: {
+                managerChatId: chatIdStr
+            }
+        });
+
+        if (count.count > 0) {
+            log.info("Passively captured Manager Chat IDs", { handle, count: count.count, chatId });
+        }
+    } catch (e) {
+        log.error("Failed passive manager capture", e as Error);
     }
 }
 

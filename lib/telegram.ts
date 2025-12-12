@@ -200,3 +200,25 @@ export async function getBotUsername(token: string): Promise<string | null> {
         return null;
     }
 }
+
+/**
+ * Deletes the webhook to switch to polling mode.
+ */
+export async function deleteWebhook(token: string) {
+    const url = `https://api.telegram.org/bot${token}/deleteWebhook`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+            log.warn("Failed to delete webhook", { error: data.description });
+            return false;
+        }
+
+        log.info("Webhook deleted successfully.");
+        return true;
+    } catch (e) {
+        log.error("Error deleting webhook", e as Error);
+        return false;
+    }
+}

@@ -41,9 +41,15 @@ async function poll(token: string) {
             // If 409 Conflict, it means a webhook is active. We should delete it.
             if (res.status === 409) {
                 log.warn("Webhook conflict detected. Deleting Webhook to enable Polling...");
-                await fetch(`https://api.telegram.org/bot${token}/deleteWebhook`);
+
+                const { deleteWebhook } = await import("./telegram");
+                await deleteWebhook(token);
+
+                // Wait a bit for Telegram to propagate the deletion
+                await new Promise(resolve => setTimeout(resolve, 5000));
+
                 // Retry immediately
-                setTimeout(() => poll(token), 1000);
+                poll(token);
                 return;
             }
             throw new Error(`Telegram API Error: ${res.statusText}`);

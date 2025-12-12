@@ -48,9 +48,10 @@ export async function POST(req: Request) {
             else if (text.startsWith("/start")) {
                 const parts = text.split(" ");
                 // Sub-payload: /start setup_recovery_[slug]
+                // Sub-payload: /start setup_recovery_[slug]
                 if (parts.length > 1 && parts[1].startsWith("setup_recovery_")) {
                     const slug = parts[1].replace("setup_recovery_", "");
-                    await connectEvent(slug, chatId, update.message.from, token);
+                    await handleRecoverySetup(chatId, update.message.from, slug, token);
                 } else if (parts.length > 1 && (parts[1] === "login" || parts[1] === "recover_handle")) {
                     // Global Login Flow
                     await handleGlobalLogin(chatId, update.message.from, token);
@@ -143,6 +144,47 @@ async function captureParticipantIdentity(chatId: number, user: any) {
     } catch (e) {
         log.error("Failed passive capture", e as Error);
     }
+}
+
+async function handleRecoverySetup(chatId: number, user: any, slug: string, token: string) {
+    const prisma = (await import("@/lib/prisma")).default;
+    const { sendTelegramMessage } = await import("@/lib/telegram");
+
+    const event = await prisma.event.findUnique({ where: { slug } });
+
+    if (!event) {
+        await sendTelegramMessage(chatId, "⚠️ Event not found.", token);
+        return;
+    }
+
+    // This flow is ONLY for the manager to verify themselves via DM.
+    // We do NOT set the `telegramChatId` (Group ID) here.
+
+    // Check if the user is the manager
+    const senderUsername = user.username?.toLowerCase();
+    const managerHandle = event.managerTelegram?.toLowerCase().replace('@', '');
+
+    if (!senderUsername || !managerHandle) {
+        await sendTelegramMessage(chatId, "⚠️ Could not verify identity. Please ensure you have a Telegram username set.", token);
+        return;
+    }
+
+    if (senderUsername !== managerHandle) {
+        // Security: Don't link if handles mismatch
+        await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.\n\nIf you changed your handle, please update it on the event page first.`, token);
+        return;
+    }
+
+    // Link matches!
+    await prisma.event.update({
+        where: { id: event.id },
+        data: { managerChatId: user.id.toString() } // Use user.id (Personal)
+    });
+
+    log.info("Manager recovery linked successfully", { slug, manager: managerHandle, chatId: user.id });
+
+    // Send success
+    await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've verified you as the manager of <b>${event.title}</b>.\n\nThe event page on your device should update in a few seconds.`, token);
 }
 
 async function handleGlobalLogin(chatId: number, user: any, token: string) {

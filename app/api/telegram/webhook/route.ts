@@ -162,29 +162,41 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, toke
 
     // Check if the user is the manager
     const senderUsername = user.username?.toLowerCase();
-    const managerHandle = event.managerTelegram?.toLowerCase().replace('@', '');
 
-    if (!senderUsername || !managerHandle) {
+    if (!senderUsername) {
         await sendTelegramMessage(chatId, "⚠️ Could not verify identity. Please ensure you have a Telegram username set.", token);
         return;
     }
 
-    if (senderUsername !== managerHandle) {
-        // Security: Don't link if handles mismatch
-        await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.\n\nIf you changed your handle, please update it on the event page first.`, token);
-        return;
+    const managerHandle = event.managerTelegram?.toLowerCase().replace('@', '');
+    let updateData: any = { managerChatId: user.id.toString() }; // Use user.id (Personal)
+    let claimMessage = "";
+
+    // 1. If NO manager is set, this user CLAIMS it.
+    if (!managerHandle) {
+        updateData.managerTelegram = senderUsername;
+        claimMessage = `\n\n👮 <b>Manager Set:</b> @${senderUsername}`;
+        log.info("Manager claimed event via recovery", { slug, manager: senderUsername });
+    }
+    // 2. If manager IS set, verify identity
+    else {
+        if (senderUsername !== managerHandle) {
+            // Security: Don't link if handles mismatch
+            await sendTelegramMessage(chatId, `⚠️ <b>Identity Mismatch</b>\n\nYou are @${senderUsername}, but this event is managed by @${managerHandle}.\n\nIf you changed your handle, please update it on the event page first.`, token);
+            return;
+        }
     }
 
     // Link matches!
     await prisma.event.update({
         where: { id: event.id },
-        data: { managerChatId: user.id.toString() } // Use user.id (Personal)
+        data: updateData
     });
 
-    log.info("Manager recovery linked successfully", { slug, manager: managerHandle, chatId: user.id });
+    log.info("Manager recovery linked successfully", { slug, manager: senderUsername, chatId: user.id });
 
     // Send success
-    await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've verified you as the manager of <b>${event.title}</b>.\n\nThe event page on your device should update in a few seconds.`, token);
+    await sendTelegramMessage(chatId, `✅ <b>Recovery Setup Complete!</b>\n\nI've verified you as the manager of <b>${event.title}</b>.${claimMessage}\n\nThe event page on your device should update in a few seconds.`, token);
 }
 
 async function handleGlobalLogin(chatId: number, user: any, token: string) {

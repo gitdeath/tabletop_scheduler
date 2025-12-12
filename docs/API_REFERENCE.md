@@ -81,8 +81,7 @@ Example: `https://your-domain.com/api/event`
 **Description:** Removes old/expired events to keep the database size manageable. Designed to be called by an external scheduler (e.g., GitHub Actions, cron-job.org, or system cron).
 
 **Authentication:** 
-- **Localhost/Internal:** No authentication required (checks IP `127.0.0.1` or `::1`).
-- **External:** Requires `Authorization: Bearer <CRON_SECRET>` header (if `CRON_SECRET` env var is set).
+- **Internal Only:** This endpoint is restricted to localhost (127.0.0.1) access and is triggered automatically by the internal Docker scheduler. Public access is blocked.
 
 **Behavior:**
 - Runs automatically daily at 03:00 UTC (via internal cron).

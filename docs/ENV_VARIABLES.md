@@ -10,7 +10,7 @@ TabletopTime uses environment variables for configuration. You can set these in 
 | `TZ` | No | `UTC` | Timezone for the server (e.g., `America/Chicago`). Important for log timestamps and cron job logic. |
 | `NODE_ENV` | No | `development` | Set to `production` for deployed environments. |
 | `LOG_LEVEL` | No | `info` | Logging verbosity. Options: `debug`, `info`, `warn`, `error`. Prisma queries are logged only in `debug`. |
-| `CRON_SECRET` | No | - | **Optional.** Only required if you want to trigger cleanup from an *external* source. The internal Docker cron uses localhost access which does not require this secret. |
+
 
 ## Event Retention (Cleanup)
 *Control how long events stay in the database after they pass.*

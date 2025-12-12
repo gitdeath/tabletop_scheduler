@@ -37,7 +37,7 @@ This is the public page you share with your players.
 
 As the organizer, you use this page to control the event.
 - **Manager Controls**:
-    - **Setup Recovery**: If you haven't connected a group yet, click "DM Me the Magic Link" to let the bot capture your details.
+    - **Setup Recovery**: If you haven't connected a group yet, click "Register for Magic Links" to let the bot capture your details. (See **[Magic Links](../docs/MAGIC_LINKS.md)** for details).
     - **DM Me Manager Link**: Once connected, use this to get a private login link sent to your Telegram DMs.
     - **Bot Status**: Shows if the Telegram bot is connected to your group.
 - **Finalize Event**:

@@ -15,17 +15,11 @@ export async function GET(req: Request) {
         const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
         const isLocal = ip.includes("127.0.0.1") || ip.includes("::1");
 
-        // In local development, we might just allow it. In production Docker, curl uses 127.0.0.1.
-        // We'll relax this slightly to allow manual testing if needed, but primarily relying on network isolation.
-        // If CRON_SECRET is present, we honor it (legacy). If not, we check for local.
-        if (process.env.CRON_SECRET) {
-            const authHeader = req.headers.get('authorization');
-            if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-            }
-        } else {
-            // No secret? Must be local.
-            // Note: In some serverless envs, this might be risky if exposed. This is designed for Docker.
+        // STRICT SECURITY: We ONLY allow local requests (from loopback).
+        // This effectively isolates the endpoint to the internal Docker network.
+        if (!isLocal) {
+            log.warn("Blocked external cron attempt", { ip });
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Configurable Retention (Default: 1 Day)

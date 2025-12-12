@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ManagerControls } from "@/components/ManagerControls";
+import { HistoryTracker } from "@/components/HistoryTracker";
 import { ClientDate } from "@/components/ClientDate";
 import { FinalizeEventModal } from "./FinalizeEventModal";
 import { EditLocationModal } from "./EditLocationModal";
@@ -141,6 +142,8 @@ export default async function ManageEventPage({ params }: PageProps) {
                             </div>
                         </div>
 
+                        <HistoryTracker slug={event.slug} title={event.title} />
+
                         <TelegramConnect
                             slug={event.slug}
                             botUsername={botUsername || 'TabletopSchedulerBot'}
@@ -270,6 +273,6 @@ export default async function ManageEventPage({ params }: PageProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

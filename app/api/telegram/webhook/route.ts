@@ -237,6 +237,14 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
     const senderUsername = user?.username;
     const senderId = user?.id?.toString();
 
+    log.debug("Checking Manager Link for Connect", {
+        slug,
+        sender: senderUsername,
+        senderId,
+        currentManager: event.managerTelegram,
+        isManagerMatch: event.managerTelegram?.toLowerCase().replace('@', '') === senderUsername?.toLowerCase()
+    });
+
     let updateData: any = { telegramChatId: chatId.toString() };
     let capturedMsg = "";
 
@@ -250,6 +258,7 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
             updateData.managerChatId = senderId;
         }
         capturedMsg = `\n\n👮 <b>Manager Set:</b> @${senderUsername}`;
+        log.info("Manager claimed event via connect", { slug, manager: senderUsername, chatId: senderId });
     }
     // 2. If the sender IS the manager, update their Chat ID (Repair/Link DM)
     else if (event.managerTelegram && senderUsername &&
@@ -257,7 +266,10 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
         if (senderId) {
             updateData.managerChatId = senderId;
             capturedMsg = `\n\n✅ <b>Manager Verified</b>`;
+            log.info("Manager verified via connect", { slug, manager: senderUsername, chatId: senderId });
         }
+    } else {
+        log.info("Connect only (No manager link)", { slug, sender: senderUsername });
     }
 
     // Connect
@@ -266,7 +278,7 @@ async function connectEvent(slug: string, chatId: number, user: any, token: stri
         data: updateData
     });
 
-    log.info("Connected chat to event", { chatId, slug, manager: updateData.managerTelegram });
+    log.info("Connected chat to event", { chatId, slug, updates: updateData });
 
     // Customize message if this was purely a DM recovery setup
     if (chatId.toString() === senderId && updateData.managerChatId) {

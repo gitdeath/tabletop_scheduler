@@ -92,7 +92,6 @@ export function TelegramConnect({ slug, botUsername, initialTelegramLink, hasCha
                 <div className="space-y-1">
                     <p className="font-bold">Connect Telegram Notifications</p>
                     <p className="opacity-90 text-xs">
-                        {step === 'initial' && "Is the bot already in your group?"}
                         {step === 'bot_in_group' && "Great! Just one more step."}
                         {step === 'bot_not_in_group' && "Okay, let's get set up."}
                         {step === 'link_saved' && "Link Saved! Now add the bot."}

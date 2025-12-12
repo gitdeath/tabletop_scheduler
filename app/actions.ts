@@ -29,11 +29,27 @@ export async function recoverManagerLink(slug: string, handle: string) {
     const normalize = (h: string) => h.toLowerCase().replace('@', '').trim();
 
     if (normalize(event.managerTelegram) === normalize(handle)) {
-        if (event.adminToken) {
-            await setAdminCookie(slug, event.adminToken);
+        // MATCH!
+        // Instead of logging them in directly, we send a Magic Link to their DM.
+        if (!event.managerChatId) {
+            return { error: "Handle matched, but the bot hasn't connected with you yet. Please open the bot and click 'Start' first." };
         }
-        log.info("Manager recovery successful", { slug });
-        return { success: true, url: `/e/${slug}/manage` };
+
+        const { sendTelegramMessage } = await import("@/lib/telegram");
+        const { getBaseUrl } = await import("@/lib/url");
+        const { headers } = await import("next/headers");
+
+        const baseUrl = getBaseUrl(headers());
+        const magicLink = `${baseUrl}/api/event/${slug}/auth?token=${event.adminToken}`;
+
+        await sendTelegramMessage(
+            event.managerChatId,
+            `🔐 <b>Login Request</b>\n\nClick here to manage "${event.title}":\n${magicLink}`,
+            process.env.TELEGRAM_BOT_TOKEN!
+        );
+
+        log.info("Manager recovery DM sent", { slug, chatId: event.managerChatId });
+        return { success: true, message: "Recovery link sent to your Telegram DMs!" };
     }
 
     log.warn("Manager recovery failed: Handle mismatch", { slug, inputHandle: handle });
@@ -59,11 +75,11 @@ export async function dmManagerLink(slug: string) {
 
     // Priority: Dynamic Header -> Localhost Fallback
     const baseUrl = getBaseUrl(headerList);
-    const link = `${baseUrl}/e/${slug}/manage`;
+    const magicLink = `${baseUrl}/api/event/${slug}/auth?token=${event.adminToken}`;
 
     log.info("Sending DM recovery link", { slug, chatId: event.managerChatId });
 
-    await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nHere is your link for <b>${event.title}</b>:\n${link}`, process.env.TELEGRAM_BOT_TOKEN!);
+    await sendTelegramMessage(event.managerChatId, `🔑 <b>Manager Link Recovery</b>\n\nClick here to manage <b>${event.title}</b>:\n${magicLink}`, process.env.TELEGRAM_BOT_TOKEN!);
 
     return { success: true };
 }

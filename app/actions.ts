@@ -352,6 +352,20 @@ export async function sendGlobalMagicLink(handle: string) {
 }
 
 export async function generateShortRecoveryToken(slug: string) {
+    // Check for existing valid token first to prevent race conditions (e.g. multi-tab)
+    const existing = await prisma.event.findUnique({
+        where: { slug },
+        select: { recoveryToken: true, recoveryTokenExpires: true }
+    });
+
+    // If we have a token that is valid for at least 2 more minutes, reuse it.
+    if (existing?.recoveryToken && existing.recoveryTokenExpires) {
+        const timeRemaining = existing.recoveryTokenExpires.getTime() - Date.now();
+        if (timeRemaining > 2 * 60 * 1000) {
+            return { success: true, token: existing.recoveryToken };
+        }
+    }
+
     const crypto = await import('crypto');
     // Generate a short 8-character hex token (4 bytes)
     const token = crypto.randomBytes(4).toString('hex');

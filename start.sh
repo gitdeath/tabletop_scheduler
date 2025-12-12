@@ -19,12 +19,19 @@ ls -ld /app/data
 echo "⚙️ Running database migrations..."
 npx prisma migrate deploy
 
-# Setup Internal Cron Job (Daily at 3AM UTC)
-echo "⏰ Setting up internal cleanup cron..."
-echo "0 3 * * * curl http://127.0.0.1:3000/api/cron/cleanup >> /app/data/cron.log 2>&1" > /tmp/crontab
-crontab /tmp/crontab
-crond -b -L /app/data/cron.log
-echo "✅ Cron daemon started."
+# Setup Internal Cron Job (Simple background loop)
+echo "⏰ Setting up internal cleanup loop..."
+# Run once after 5 minutes to clean up any restart junk, then every 24 hours
+(
+    sleep 300
+    while true; do
+        echo "🧹 Running daily cleanup..."
+        curl -s http://127.0.0.1:3000/api/cron/cleanup >> /app/data/cron.log 2>&1 || echo "❌ Cleanup failed" >> /app/data/cron.log
+        sleep 86400
+    done
+) &
+
+echo "✅ Cron loop started."
 
 # Start the application
 echo "🟢 Starting Next.js server..."

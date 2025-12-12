@@ -67,8 +67,15 @@ If you modify `prisma/schema.prisma`:
 ### Telegram Bot Testing
 Testing the bot locally is handled via **Long Polling**, which is enabled automatically when you run `npm run dev` if a `TELEGRAM_BOT_TOKEN` is present.
 
-- **Standard (Polling)**: Just run the app. The server will connect to Telegram, clear any existing webhooks, and start processing updates.
-- **Advanced (Webhooks)**: If you specifically need to test webhooks (e.g., for production verification), you must disable the auto-poller in `instrumentation.ts` first, then use `ngrok` or similar to expose your local server.
+- **Standard (Polling)**: Just run the app (`npm run dev`). Logic is handled in `lib/telegram-poller.ts`. This file implements the "long poll" loop to fetch updates manually.
+- **Production (Webhooks)**: The live site uses the standard Next.js API route at `app/api/telegram/webhook/route.ts`. Telegram pushes updates here automatically.
+
+> [!IMPORTANT]
+> Because these are two separate entry points, **any logic changes to bot command handling must be applied to BOTH files**:
+> 1. `app/api/telegram/webhook/route.ts` (Webhook / Prod)
+> 2. `lib/telegram-poller.ts` (Polling / Dev)
+>
+> If you add a new command like `/connect` or a new deep-link handler, ensure you copy the implementation or shared logic to both locations.
 
 ## Pull Requests
 - Please ensure `npm run build` passes before submitting.

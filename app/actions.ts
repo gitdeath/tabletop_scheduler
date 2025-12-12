@@ -100,6 +100,24 @@ export async function updateManagerHandle(slug: string, handle: string) {
     }
 }
 
+export async function updateTelegramInviteLink(slug: string, link: string) {
+    if (!link || !link.startsWith("https://t.me/")) {
+        return { error: "Invalid Telegram link. It should start with https://t.me/" };
+    }
+
+    try {
+        await prisma.event.update({
+            where: { slug },
+            data: { telegramLink: link }
+        });
+        log.info("Telegram invite link updated", { slug });
+        return { success: true };
+    } catch (e) {
+        log.error("Failed to update telegram link", e as Error);
+        return { error: "Failed to save link." };
+    }
+}
+
 export async function deleteEvent(slug: string) {
     const event = await prisma.event.findUnique({
         where: { slug }

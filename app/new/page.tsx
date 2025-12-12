@@ -104,15 +104,16 @@ export default function NewEventPage() {
                                     <span className="bg-indigo-900/50 p-0.5 rounded text-indigo-300 group-open:rotate-180 transition-transform">
                                         <ChevronDown className="w-3 h-3" />
                                     </span>
-                                    How to connect a pinned message bot?
+                                    How to find your invite link?
                                 </summary>
                                 <div className="mt-2 pl-2 border-l-2 border-indigo-900/50 space-y-2 text-slate-400">
-                                    <p>Get event updates and a pinned dashboard in your group chat:</p>
+                                    <p>To get your group&apos;s invite link:</p>
                                     <ol className="list-decimal pl-5 space-y-1">
-                                        <li>Add our bot to your Telegram group (and give it <b>Admin</b> rights to Pin).</li>
-                                        <li>Paste the group&apos;s <b>Invite Link</b> above (so players can join).</li>
-                                        <li>Create this event.</li>
-                                        <li><b>Important:</b> Paste the <i>Event Link</i> in your group chat to finish the connection!</li>
+                                        <li>Open your group chat in Telegram.</li>
+                                        <li>Tap the group name at the top to open <b>Group Info</b>.</li>
+                                        <li>Tap <b>Add Members</b> (or &quot;Add&quot; icon).</li>
+                                        <li>Tap <b>Invite to Group via Link</b>.</li>
+                                        <li>Copy and paste that link here.</li>
                                     </ol>
                                 </div>
                             </details>
@@ -135,7 +136,7 @@ export default function NewEventPage() {
 
                         <div className="flex flex-col gap-2">
                             <label className="font-semibold text-slate-200">Minimum Players</label>
-                            <p className="text-xs text-slate-400">How many people need to say YES for a session to happen?</p>
+                            <p className="text-xs text-slate-400">Lowest number of players required for this event</p>
                             <input
                                 type="number"
                                 min="2"

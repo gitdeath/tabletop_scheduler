@@ -13,6 +13,7 @@ import { FinalizeEventModal } from "./FinalizeEventModal";
 import { EditLocationModal } from "./EditLocationModal";
 import { getBotUsername } from "@/lib/telegram";
 import { AddToCalendar } from "@/components/AddToCalendar";
+import { TelegramConnect } from "@/components/TelegramConnect";
 
 interface PageProps {
     params: { slug: string };
@@ -139,40 +140,12 @@ export default async function ManageEventPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        {!event.telegramChatId ? (
-                            <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-xl text-sm text-blue-300 flex flex-col gap-4">
-                                <div className="flex items-start gap-3">
-                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                    <div className="space-y-1">
-                                        <p className="font-bold">Connect Telegram Notifications</p>
-                                        <p className="opacity-90 text-xs">
-                                            First, add the bot to your group. Then, <b>paste this page&apos;s link</b> into the chat to connect it.
-                                            <br />
-                                            <span className="opacity-75 italic">Already in the group? Just paste the link!</span>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {botUsername && (
-                                    <a
-                                        href={`https://t.me/${botUsername}?startgroup=true&admin=pin_messages`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
-                                    >
-                                        <span>🤖 Add {botUsername} to Group</span>
-                                    </a>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="p-4 bg-green-900/20 border border-green-800 rounded-xl text-sm text-green-300 flex items-center gap-3">
-                                <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                                <div>
-                                    <p className="font-bold">Telegram Connected</p>
-                                    <p className="opacity-80 text-xs">This event is linked to a Telegram group.</p>
-                                </div>
-                            </div>
-                        )}
+                        <TelegramConnect
+                            slug={event.slug}
+                            botUsername={botUsername || 'TabletopSchedulerBot'}
+                            initialTelegramLink={event.telegramLink}
+                            hasChatId={!!event.telegramChatId}
+                        />
 
                         <ManagerControls
                             slug={event.slug}

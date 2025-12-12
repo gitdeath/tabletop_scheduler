@@ -14,7 +14,7 @@ TabletopTime helps you find the best time for your gaming group to meet. It is d
 - **Telegram Bot**: 
   - Pins a live-updating dashboard in your group chat.
   - Notifies everyone when an event is finalized.
-- **Privacy-First**: Your data stays on your server (SQLite).
+- **Privacy-First**: Your data stays on your server (SQLite). We capture as little information as possible and use your local browser cache to remember who you are.
 
 ## Quick Start (Docker)
 

@@ -1,11 +1,12 @@
 {
   "name": "tabletop_scheduler",
   "version": "0.1.0",
-  "license": "MIT",
+  "license": "CC-BY-NC-SA-4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:hosted": "prisma generate --schema=prisma/schema.hosted.prisma && next build",
     "start": "next start",
     "lint": "next lint"
   },

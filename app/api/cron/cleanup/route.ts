@@ -10,15 +10,19 @@ export async function GET(req: Request) {
     try {
         log.info("Cleanup job started");
 
-        // Security: Restrict to Localhost (Docker internal cron)
+        // Security: Restrict to Localhost (Docker internal cron) OR Authorized Vercel Cron
         // Requests from 127.0.0.1 or ::1 allowed.
         const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
         const isLocal = ip.includes("127.0.0.1") || ip.includes("::1");
 
-        // STRICT SECURITY: We ONLY allow local requests (from loopback).
-        // This effectively isolates the endpoint to the internal Docker network.
-        if (!isLocal) {
-            log.warn("Blocked external cron attempt", { ip });
+        // Check for CRON_SECRET authorization
+        const authHeader = req.headers.get("authorization");
+        // Bearer token check
+        const isAuthorized = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+
+        // STRICT SECURITY: We ONLY allow local requests (from loopback) OR verified secret.
+        if (!isLocal && !isAuthorized) {
+            log.warn("Blocked external cron attempt", { ip, hasAuth: !!authHeader });
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

@@ -18,6 +18,7 @@ interface VotingInterfaceProps {
     initialSlots: Slot[];
     participants: any[];
     minPlayers: number;
+    serverParticipantId?: number;
 }
 
 /**
@@ -25,7 +26,7 @@ interface VotingInterfaceProps {
  * Handles Name/Telegram input, voting on time slots, and indicating hosting ability.
  * Persists user identity to localStorage for seamless re-visits.
  */
-export function VotingInterface({ eventId, initialSlots, participants, minPlayers }: VotingInterfaceProps) {
+export function VotingInterface({ eventId, initialSlots, participants, minPlayers, serverParticipantId }: VotingInterfaceProps) {
     const [slots, setSlots] = useState(initialSlots);
     const [userName, setUserName] = useState("");
     const [userTelegram, setUserTelegram] = useState("");
@@ -35,40 +36,51 @@ export function VotingInterface({ eventId, initialSlots, participants, minPlayer
     const [hasVoted, setHasVoted] = useState(false);
     const [participantId, setParticipantId] = useState<number | null>(null);
 
-    // Hydrate state from LocalStorage on mount (client-side only).
-    // helps returning users skip re-entering their name.
+    // Hydrate state (Server > LocalStorage)
     useState(() => {
-        if (typeof window !== 'undefined') {
-            const savedParticipantId = localStorage.getItem(`tabletop_participant_${eventId}`);
-            if (savedParticipantId) {
-                const pid = parseInt(savedParticipantId);
-                setParticipantId(pid);
+        if (typeof window === 'undefined') return;
 
-                // Find this participant in the list to pre-fill info
-                const existing = participants.find(p => p.id === pid);
-                if (existing) {
-                    setUserName(existing.name);
-                    setUserTelegram(existing.telegramId || "");
+        // Priority 1: Server Identity (passed via Magic Link cookie)
+        // Priority 2: Local Storage (returning user on same device)
+        let pid = serverParticipantId;
+        if (!pid) {
+            const saved = localStorage.getItem(`tabletop_participant_${eventId}`);
+            if (saved) pid = parseInt(saved);
+        }
 
-                    // Reconstruct voting state from server data so they can edit it.
-                    const myVotes: Record<number, string> = {};
-                    const myHosting: Record<number, boolean> = {};
+        if (pid) {
+            setParticipantId(pid);
 
-                    initialSlots.forEach(slot => {
-                        const userVote = slot.votes.find((v: any) => v.participantId === pid);
-                        if (userVote) {
-                            myVotes[slot.id] = userVote.preference;
-                            if (userVote.canHost) myHosting[slot.id] = true;
-                        }
-                    });
-
-                    setVotes(myVotes);
-                    setCanHost(myHosting);
-                }
-            } else {
-                setUserName(localStorage.getItem('tabletop_username') || "");
-                setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
+            // If we have a server ID, ensure local storage matches (Auto-Sync)
+            if (serverParticipantId) {
+                localStorage.setItem(`tabletop_participant_${eventId}`, pid.toString());
             }
+
+            // Hydrate fields
+            const existing = participants.find(p => p.id === pid);
+            if (existing) {
+                setUserName(existing.name);
+                setUserTelegram(existing.telegramId || "");
+
+                // Reconstruct voting state
+                const myVotes: Record<number, string> = {};
+                const myHosting: Record<number, boolean> = {};
+
+                initialSlots.forEach(slot => {
+                    const userVote = slot.votes.find((v: any) => v.participantId === pid);
+                    if (userVote) {
+                        myVotes[slot.id] = userVote.preference;
+                        if (userVote.canHost) myHosting[slot.id] = true;
+                    }
+                });
+
+                setVotes(myVotes);
+                setCanHost(myHosting);
+            }
+        } else {
+            // Fallback for new user
+            setUserName(localStorage.getItem('tabletop_username') || "");
+            setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
         }
     });
 

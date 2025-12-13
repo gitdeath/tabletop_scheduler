@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { HistoryTracker } from "@/components/HistoryTracker";
 import { format } from "date-fns";
@@ -36,6 +37,18 @@ async function getEvent(slug: string) {
 
 export default async function EventPage({ params }: PageProps) {
     const event = await getEvent(params.slug);
+
+    // Identify user from server-side cookie (Fail-safe for cross-browser sync)
+    const cookieStore = cookies();
+    const userChatId = cookieStore.get("tabletop_user_chat_id")?.value;
+
+    let serverParticipantId: number | undefined;
+    if (userChatId && event?.participants) {
+        const found = event.participants.find(p => p.chatId === userChatId);
+        if (found) {
+            serverParticipantId = found.id;
+        }
+    }
 
     if (!event) {
         notFound();
@@ -127,6 +140,7 @@ export default async function EventPage({ params }: PageProps) {
                         initialSlots={slotsWithCounts}
                         participants={event.participants}
                         minPlayers={event.minPlayers}
+                        serverParticipantId={serverParticipantId}
                     />
                 )}
 

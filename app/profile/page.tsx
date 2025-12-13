@@ -23,7 +23,7 @@ export default async function ProfilePage() {
             // We use findMany on Participant then map, or use where logic on Event
             const participated = await prisma.participant.findMany({
                 where: { chatId: userChatId },
-                include: { event: { select: { slug: true, title: true, updatedAt: true } } },
+                include: { event: { select: { id: true, slug: true, title: true, updatedAt: true } } },
                 orderBy: { event: { updatedAt: 'desc' } }
             });
 
@@ -38,7 +38,10 @@ export default async function ProfilePage() {
                 slug: p.event.slug,
                 title: p.event.title,
                 role: 'PARTICIPANT',
-                lastVisited: p.event.updatedAt.toISOString()
+                lastVisited: p.event.updatedAt.toISOString(),
+                // Add identity info for bulk sync
+                eventId: p.event.id,
+                participantId: p.id
             }));
 
             // Merge and Dedupe (Manager role takes precedence)

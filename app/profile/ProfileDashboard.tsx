@@ -12,6 +12,8 @@ interface ServerEvent {
     title: string;
     role: 'MANAGER' | 'PARTICIPANT';
     lastVisited: string; // ISO string
+    eventId?: number;
+    participantId?: number;
 }
 
 export function ProfileDashboard({ serverEvents = [] }: { serverEvents?: ServerEvent[] }) {
@@ -30,15 +32,24 @@ export function ProfileDashboard({ serverEvents = [] }: { serverEvents?: ServerE
         }
     }, [validateHistory]);
 
-    // Sync Server Events to Local Storage
+    // Sync Server Events & Identities to Local Storage
     useEffect(() => {
         if (serverEvents.length > 0 && bulkMerge) {
+            // 1. History Sync
             const toSync = serverEvents.map(e => ({
                 slug: e.slug,
                 title: e.title,
                 lastVisited: new Date(e.lastVisited).getTime()
             }));
             bulkMerge(toSync);
+
+            // 2. Identity Sync (Bulk restore voting status)
+            serverEvents.forEach(e => {
+                if (e.eventId && e.participantId) {
+                    const key = `tabletop_participant_${e.eventId}`;
+                    localStorage.setItem(key, e.participantId.toString());
+                }
+            });
         }
     }, [serverEvents, bulkMerge]);
 
@@ -150,8 +161,8 @@ export function ProfileDashboard({ serverEvents = [] }: { serverEvents?: ServerE
 
                         {msg && (
                             <div className={`mt-4 p-3 rounded-lg text-sm border ${msg.type === 'success'
-                                    ? 'bg-green-900/20 border-green-800 text-green-300'
-                                    : 'bg-amber-900/20 border-amber-800 text-amber-300'
+                                ? 'bg-green-900/20 border-green-800 text-green-300'
+                                : 'bg-amber-900/20 border-amber-800 text-amber-300'
                                 }`}>
                                 <p className="font-medium mb-1">{msg.text}</p>
                                 {msg.deepLink && (

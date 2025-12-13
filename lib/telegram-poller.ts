@@ -304,20 +304,36 @@ async function handleRecoverySetup(chatId: number, user: any, slug: string, reco
 }
 
 async function handleGlobalLogin(chatId: number, user: any, token: string) {
-    // Create Login Token
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+    const chatStr = chatId.toString();
 
-    const loginToken = await prisma.loginToken.create({
-        data: {
-            chatId: chatId.toString(),
-            expiresAt
-        }
+    // 1. Check for existing valid token (reuse to prevent Link Preview race conditions)
+    const existing = await prisma.loginToken.findFirst({
+        where: { chatId: chatStr },
+        orderBy: { expiresAt: 'desc' }
     });
+
+    let tokenValue = "";
+
+    if (existing && existing.expiresAt.getTime() - Date.now() > 2 * 60 * 1000) {
+        // Reuse existing if > 2 mins left
+        tokenValue = existing.token;
+    } else {
+        // Create new
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+        const loginToken = await prisma.loginToken.create({
+            data: {
+                chatId: chatStr,
+                expiresAt
+            }
+        });
+        tokenValue = loginToken.token;
+    }
 
     // Use a fixed hardcoded fallback just in case getBaseUrl is getting weird in polling
     const baseUrl = getBaseUrl(null);
-    const magicLink = `${baseUrl}/auth/login?token=${loginToken.token}`;
+    const magicLink = `${baseUrl}/auth/login?token=${tokenValue}`;
 
     await sendTelegramMessage(chatId, `🔐 <b>Magic Login</b>\n\nClick here to access <b>My Events</b>:\n${magicLink}\n\n(Valid for 15 minutes)`, token);
 }

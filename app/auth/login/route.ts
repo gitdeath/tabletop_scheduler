@@ -46,9 +46,8 @@ export async function GET(request: NextRequest) {
         });
 
         // 4. Cleanup Token (One-time use)
-        await prisma.loginToken.delete({
-            where: { token }
-        });
+        // MOVED TO CRON: We keep tokens valid until expiry to prevent "Link Preview" race conditions.
+        // Automated previews consume the token immediately otherwise.
 
         log.info("Global Magic Link login successful", { chatId: validToken.chatId });
         return NextResponse.redirect(`${baseUrl}/profile?success=logged_in`);

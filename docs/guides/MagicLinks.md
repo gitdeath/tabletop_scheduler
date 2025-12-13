@@ -13,7 +13,11 @@ If you are on a new device or your cookies have been cleared, you can recover ac
 2.  Scroll down to the **"Sync & Recover"** section.
 3.  Enter your **Telegram Handle** (e.g., `@YourHandle`).
 4.  Click **Sync My Events**.
-5.  The bot will send a **Global Magic Link** to your Telegram DMs. Click it to log in and sync your dashboard.
+5.  The bot will send a **Global Magic Link** to your Telegram DMs. Click it to log in.
+6.  This will:
+    *   **Restore your Event List**: All events you manage or voted on will appear on your dashboard.
+    *   **Restore your Voting Identity**: You will instantly regain "Voted" status on all events, allowing you to edit your previous votes.
+    *   **Safe Merge**: This adds to your existing local history without deleting any anonymous events you may have visited on this device.
 
 ## 2. Manager Recovery (Manage Page)
 *Best for: Quickly switching devices for a specific event.*

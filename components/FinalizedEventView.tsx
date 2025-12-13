@@ -10,9 +10,10 @@ import { AddToCalendar } from "./AddToCalendar";
 interface FinalizedEventViewProps {
     event: any;
     finalizedSlot: any;
+    serverParticipantId?: number;
 }
 
-export function FinalizedEventView({ event, finalizedSlot }: FinalizedEventViewProps) {
+export function FinalizedEventView({ event, finalizedSlot, serverParticipantId }: FinalizedEventViewProps) {
     // State for joining
     const [userName, setUserName] = useState("");
     const [userTelegram, setUserTelegram] = useState("");
@@ -28,24 +29,35 @@ export function FinalizedEventView({ event, finalizedSlot }: FinalizedEventViewP
             preference: v.preference
         }));
 
-    // Check if user is already in attendees list
+    // Check if user is already in attendees list (Priority: Server > LocalStorage)
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window === 'undefined') return;
+
+        let pid = serverParticipantId;
+        if (!pid) {
             const savedId = localStorage.getItem(`tabletop_participant_${event.id}`);
-            if (savedId) {
-                setParticipantId(parseInt(savedId));
-                // Check if this ID is in the attendees list
-                const isAttending = attendees.some((a: any) => a.id === parseInt(savedId));
-                if (isAttending) {
-                    setHasJoined(true);
-                }
-            } else {
-                // Pre-fill from global prefs
-                setUserName(localStorage.getItem('tabletop_username') || "");
-                setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
-            }
+            if (savedId) pid = parseInt(savedId);
         }
-    }, [event.id, attendees]);
+
+        if (pid) {
+            setParticipantId(pid);
+
+            // Auto-Sync to local storage for future visits
+            if (serverParticipantId) {
+                localStorage.setItem(`tabletop_participant_${event.id}`, pid.toString());
+            }
+
+            // Check if this ID is in the attendees list
+            const isAttending = attendees.some((a: any) => a.id === pid);
+            if (isAttending) {
+                setHasJoined(true);
+            }
+        } else {
+            // Pre-fill from global prefs
+            setUserName(localStorage.getItem('tabletop_username') || "");
+            setUserTelegram(localStorage.getItem('tabletop_telegram') || "");
+        }
+    }, [event.id, attendees, serverParticipantId]);
 
     const handleJoin = async () => {
         if (!userName) return alert("Please enter your name");

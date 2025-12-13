@@ -133,6 +133,7 @@ export default async function EventPage({ params }: PageProps) {
                     <FinalizedEventView
                         event={event}
                         finalizedSlot={finalizedSlot}
+                        serverParticipantId={serverParticipantId}
                     />
                 ) : (
                     <VotingInterface

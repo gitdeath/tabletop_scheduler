@@ -38,4 +38,4 @@ If you are viewing an event you created but are seeing it as a *Participant* (no
 
 ---
 
-**Security Note**: All Magic Links are time-limited (15-60 minutes) and single-use. Do not share them.
+**Security Note**: All Magic Links are valid for **15 minutes**. If you accidentally close the window, you can click the same link again within that time. Do not share them.

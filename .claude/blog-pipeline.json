@@ -65,7 +65,7 @@
     "rawHtmlAllowed": true,
     "checks": [
       "`date` is a quoted YYYY-MM-DD string falling on a valid fortnightly slot (2026-08-13 + a multiple of 14 days) and is later than every other post's date in content/blog.",
-      "The post is appended to the Blog list in public/llms.txt as `- [Title](https://tabletoptime.us/blog/<slug>)` above the \"All Blog Posts\" line.",
+      "No llms.txt step needed: app/llms.txt/route.ts generates the Blog list from getAllPosts() at build time (there is no public/llms.txt; never recreate one).",
       "No body H1, no FAQ section in the body, and the chart is inline div/span HTML (not SVG, not an image)."
     ]
   },
@@ -79,7 +79,7 @@
     "out": "public/images/blog/{slug}.jpg",
     "manifest": "public/images/blog/manifest.json",
     "ai": false,
-    "stockSources": ["openverse"],
+    "stockSources": ["flickr", "stocksnap", "rawpixel"],
     "fallbackQueries": ["tabletop board game night", "dungeons and dragons dice table", "board game friends playing"],
     "maxWidth": 1600,
     "maxBytes": 500000

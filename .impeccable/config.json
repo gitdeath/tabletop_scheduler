@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "app/profile/ProfileDashboard.tsx"
+        ],
+        "createdAt": "2026-09-08T20:01:56.182Z",
+        "reason": "pre-existing site-wide indigo accent palette (indigo buttons/badges/icons across the app); this change only mounted a new panel and did not introduce the flagged colors"
+      }
+    ]
+  }
+}

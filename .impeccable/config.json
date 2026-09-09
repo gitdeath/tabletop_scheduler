@@ -11,6 +11,33 @@
         ],
         "createdAt": "2026-09-08T20:01:56.182Z",
         "reason": "pre-existing site-wide indigo accent palette (indigo buttons/badges/icons across the app); this change only mounted a new panel and did not introduce the flagged colors"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/privacy/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:22:26.797Z",
+        "reason": "pre-existing site-wide gradient heading style, untouched by this change (precedent: commit 3b1293c)"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/legal/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:22:35.113Z",
+        "reason": "pre-existing site-wide gradient heading style, untouched by this change (precedent: commit 3b1293c)"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/guide/magic-links/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:22:48.790Z",
+        "reason": "pre-existing site-wide gradient heading style, untouched by this change (precedent: commit 3b1293c)"
       }
     ]
   }

@@ -56,6 +56,24 @@
         ],
         "createdAt": "2026-09-09T17:24:07.736Z",
         "reason": "pre-existing site-wide indigo/cyan palette, untouched by this change (precedent: commit 3b1293c)"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/about/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:24:31.809Z",
+        "reason": "pre-existing site-wide gradient heading style, untouched by this copy edit"
+      },
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "app/about/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:25:13.311Z",
+        "reason": "pre-existing site palette (indigo/cyan gradient headings site-wide), untouched by this copy edit; same rationale as profile dashboard suppression in 3b1293c"
       }
     ]
   }

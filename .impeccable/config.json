@@ -38,6 +38,24 @@
         ],
         "createdAt": "2026-09-09T17:22:48.790Z",
         "reason": "pre-existing site-wide gradient heading style, untouched by this change (precedent: commit 3b1293c)"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "app/guide/magic-links/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:24:07.682Z",
+        "reason": "pre-existing callout style on this guide page, untouched by this change (precedent: commit 3b1293c)"
+      },
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "app/guide/magic-links/page.tsx"
+        ],
+        "createdAt": "2026-09-09T17:24:07.736Z",
+        "reason": "pre-existing site-wide indigo/cyan palette, untouched by this change (precedent: commit 3b1293c)"
       }
     ]
   }
